@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#150d20">
+<title>SPACE CITY — Anzac Ave, Kallangur</title>
+<style>
+/* ============================================================================
+   SPACE CITY — 1979 / alternate timeline
+   Palette is pulled straight out of the subject: wet concrete, a Moreton Bay
+   dusk going orange-to-violet, dying neon, and XXXX gold.
+   ========================================================================== */
+:root{
+  --concrete:      #9a9083;
+  --concrete-mid:  #6d6459;
+  --concrete-dark: #3b352e;
+  --dusk-top:      #241536;
+  --dusk-mid:      #6b3565;
+  --haze:          #e0714f;
+  --sun:           #ffcf6b;
+  --neon-cyan:     #4ff2d8;
+  --neon-pink:     #ff4f9e;
+  --gold:          #f5c542;
+  --suit:          #e9e5da;
+  --racing:        #ff5b2e;
+  --ink:           #150d20;
+
+  --display: "Haettenschweiler","Arial Narrow Bold","Franklin Gothic Demi Cond",Impact,"Anton",sans-serif;
+  --mono: ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+html,body{
+  margin:0;padding:0;height:100%;width:100%;
+  background:var(--ink);
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:none;              /* kill pinch-zoom + rubber-band scroll */
+  -webkit-user-select:none;user-select:none;
+  font-family:var(--mono);
+  color:var(--suit);
+}
+
+/* ---- stage: letterboxed 16:9 play area ---------------------------------- */
+#stage{
+  position:fixed;inset:0;
+  height:100vh;height:100dvh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%, #2a1c3a 0%, var(--ink) 70%);
+}
+#frame{position:relative;line-height:0;flex:0 0 auto;}
+/* Portrait: canvas on top, arcade deck below. Landscape: canvas centred. */
+body.portrait #stage{justify-content:flex-start;}
+
+canvas#game{
+  display:block;
+  image-rendering:pixelated;
+  image-rendering:crisp-edges;
+  background:#000;
+  box-shadow:0 0 40px rgba(255,79,158,.18);
+}
+body.landscape canvas#game{box-shadow:0 0 0 2px #000, 0 0 40px rgba(255,79,158,.18);}
+/* Mood-ring chromatic hit: brief colour-shift across the whole canvas. */
+canvas#game.ring{animation:chroma 900ms ease-out 1;}
+@keyframes chroma{
+  0%  {filter:hue-rotate(0deg) saturate(1);}
+  15% {filter:hue-rotate(90deg) saturate(2.4) contrast(1.15);}
+  40% {filter:hue-rotate(220deg) saturate(2) contrast(1.1);}
+  70% {filter:hue-rotate(320deg) saturate(1.6);}
+  100%{filter:hue-rotate(0deg) saturate(1);}
+}
+/* scanline + vignette veil over the canvas, sold separately in 1978 */
+#veil{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, rgba(0,0,0,0) 1px 3px),
+    radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+  mix-blend-mode:multiply;
+}
+
+/* ---- HUD ---------------------------------------------------------------- */
+#hud{
+  position:absolute;top:0;left:0;right:0;
+  display:flex;justify-content:flex-start;align-items:flex-start;
+  padding:calc(8px + env(safe-area-inset-top)) 10px 8px calc(10px + env(safe-area-inset-left));
+  gap:10px;pointer-events:none;line-height:1.25;
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:0 1px 0 #000;
+}
+#hud .block{display:flex;flex-direction:column;gap:4px;}
+#hud .label{font-size:8px;opacity:.6;letter-spacing:.22em;}
+#hud .val{font-size:15px;color:var(--gold);letter-spacing:.06em;}
+#integrity{
+  width:104px;height:9px;border:1px solid rgba(233,229,218,.55);
+  padding:1px;background:rgba(0,0,0,.45);
+}
+#integrityFill{height:100%;width:100%;background:var(--neon-cyan);transition:width .18s linear;}
+#integrity.low #integrityFill{background:var(--racing);}
+#hud .row{display:flex;gap:18px;align-items:flex-start;}
+#hud .val.alt{color:var(--neon-cyan);font-size:13px;}
+#sysBar{
+  position:fixed;z-index:30;display:flex;gap:6px;
+  top:calc(8px + env(safe-area-inset-top));
+  right:calc(10px + env(safe-area-inset-right));
+  flex-wrap: wrap; justify-content: flex-end;
+  max-width: 60vw;
+}
+#sysBar button{
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  color:var(--suit);background:rgba(0,0,0,.5);
+  border:1px solid rgba(233,229,218,.35);border-radius:2px;
+  padding:5px 7px;cursor:pointer;text-transform:uppercase;
+}
+#sysBar button:hover{border-color:var(--neon-cyan);color:var(--neon-cyan);}
+
+/* ---- screens (start / game over) ---------------------------------------- */
+.screen{
+  position:absolute;inset:0;z-index:20;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(16px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));
+  text-align:center;overflow-y:auto;overscroll-behavior:contain;
+  background:linear-gradient(180deg, rgba(21,13,32,.92) 0%, rgba(21,13,32,.97) 100%);
+  line-height:1.4;
+}
+.screen.on{display:flex;}
+
+/* The signature: a Binishell dome arch holding the signage. Grunge updated. */
+.dome{
+  position:relative;
+  width:min(78vw,300px);
+  border:2px solid #50483e;
+  border-bottom:none;
+  border-radius:50% 50% 0 0 / 62% 62% 0 0;
+  background:
+    radial-gradient(ellipse at 80% 20%, rgba(0,0,0,.4) 0%, transparent 40%),
+    radial-gradient(ellipse at 15% 85%, rgba(180,60,20,.15) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(154,144,131,.25), rgba(154,144,131,.05) 70%);
+  padding:26px 16px 14px;
+  overflow:hidden;
+  box-shadow: inset 0 0 24px rgba(0,0,0,.6);
+}
+.dome::before{ /* dome rib seams & wear */
+  content:"";position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(45deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 8px, rgba(0,0,0,.08) 8px, rgba(0,0,0,.08) 12px),
+    repeating-linear-gradient(90deg, rgba(154,144,131,.15) 0 1px, rgba(0,0,0,0) 1px 22px);
+  pointer-events:none;
+}
+.dome::after{ /* cracks */
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: linear-gradient(110deg, transparent 40%, rgba(20,10,10,.3) 41%, transparent 42%);
+}
+.eyebrow{
+  font-size:8px;letter-spacing:.34em;text-transform:uppercase;
+  color:#9a9083;margin:0 0 6px; text-shadow: 0 1px 2px #000;
+}
+h1{
+  font-family:var(--display);
+  font-size:clamp(38px,12vw,62px);
+  line-height:.86;margin:0;
+  letter-spacing:.02em;text-transform:uppercase;
+  color:#dfd6cb;
+  text-shadow:
+    2px 2px 0px rgba(0,0,0,0.8),
+    0 0 5px var(--neon-pink),
+    0 0 18px rgba(255,79,158,.5);
+  animation:flicker 7s infinite steps(1);
+}
+@keyframes flicker{
+  0%,96%,100%{opacity:1;}
+  96.5%{opacity:.35;}
+  97.2%{opacity:1;}
+  97.6%{opacity:.5;}
+  98%{opacity:1;}
+}
+.sub{
+  margin:8px 0 0;font-size:9px;letter-spacing:.18em;
+  color:var(--neon-cyan);text-transform:uppercase;opacity:.75;
+  text-shadow: 0 1px 2px #000;
+}
+.plaque{
+  max-width:330px;margin:14px auto 0;
+  font-size:10px;line-height:1.65;color:#bbaea1;letter-spacing:.02em;
+}
+.plaque b{color:var(--gold);font-weight:400;}
+
+/* marquee — the old shopping-centre sign, now running high scores */
+.marquee{
+  width:min(88vw,340px);margin:14px auto 0;
+  border-top:1px solid rgba(154,144,131,.35);
+  border-bottom:1px solid rgba(154,144,131,.35);
+  background:rgba(0,0,0,.4);
+  overflow:hidden;position:relative;height:22px;
+}
+.marquee .track{
+  position:absolute;white-space:nowrap;top:0;
+  font-size:10px;line-height:22px;letter-spacing:.14em;
+  color:var(--gold);text-transform:uppercase;
+  will-change:transform;
+}
+.marquee .track.idle{
+  position:static;text-align:center;color:var(--concrete);
+  animation:none;transform:none;
+}
+.marquee .track em{font-style:normal;color:var(--neon-cyan);}
+
+/* buttons */
+.btn{
+  font-family:var(--display);text-transform:uppercase;
+  font-size:20px;letter-spacing:.08em;
+  color:var(--ink);background:var(--gold);
+  border:none;border-radius:2px;
+  padding:11px 30px;margin-top:16px;cursor:pointer;
+  box-shadow:0 3px 0 #8a6a12;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #8a6a12;}
+.btn.ghost{
+  background:transparent;color:var(--suit);
+  border:1px solid rgba(233,229,218,.45);box-shadow:none;
+  font-size:14px;padding:8px 18px;
+}
+.btn:focus-visible,#muteBtn:focus-visible,input:focus-visible{
+  outline:2px solid var(--neon-cyan);outline-offset:2px;
+}
+.hint{margin-top:12px;font-size:9px;letter-spacing:.14em;color:var(--concrete);text-transform:uppercase;}
+
+/* game over entry form */
+.tally{display:flex;gap:20px;justify-content:center;margin:6px 0 12px;}
+.tally div{display:flex;flex-direction:column;gap:2px;}
+.tally .k{font-size:8px;letter-spacing:.2em;color:var(--concrete);text-transform:uppercase;}
+.tally .v{font-family:var(--display);font-size:30px;color:var(--gold);line-height:1;}
+.entry{display:flex;flex-direction:column;gap:7px;width:min(80vw,260px);margin-top:4px;}
+.entry input{
+  font-family:var(--mono);font-size:12px;letter-spacing:.06em;
+  padding:9px 10px;background:rgba(0,0,0,.5);color:var(--suit);
+  border:1px solid rgba(154,144,131,.5);border-radius:2px;
+}
+.entry input::placeholder{color:#6d6459;}
+.status{margin-top:10px;font-size:9px;letter-spacing:.12em;color:var(--concrete);text-transform:uppercase;min-height:12px;}
+.status.warn{color:var(--racing);}
+.status.ok{color:var(--neon-cyan);}
+
+/* ---- touch HUD ---------------------------------------------------------- */
+#touch{position:fixed;inset:0;pointer-events:none;display:none;z-index:5;}
+#touch.on{display:block;}
+body.portrait #touch{display:none;}
+
+/* ---- portrait arcade deck ----------------------------------------------
+   On a phone held upright there's no honest way to fill a 9:19 screen with a
+   16:9 side-scroller. Rather than letterbox it, the leftover height becomes a
+   real console: canvas on top, chunky buttons seated in a concrete deck below,
+   where your thumbs already are. */
+#deck{
+  display:none;width:100%;height:var(--deckH,200px);flex:0 0 auto;
+  align-items:center;justify-content:space-between;gap:10px;
+  padding:8px calc(12px + env(safe-area-inset-right))
+          calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+  background:linear-gradient(180deg,#2d2721 0%,#16120f 100%);
+  border-top:2px solid #453d33;
+  box-shadow:inset 0 2px 0 rgba(233,229,218,.07);
+}
+body.portrait #deck{display:flex;}
+#deckLeft,#deckRight{display:flex;gap:10px;align-items:center;}
+#deckPlate{
+  flex:1 1 auto;font-family:var(--display);font-size:13px;line-height:.9;
+  letter-spacing:.1em;text-transform:uppercase;text-align:center;
+  color:#4a4238;text-shadow:0 1px 0 rgba(233,229,218,.09);
+}
+body.portrait .pad{
+  position:static;
+  width:clamp(54px,16.5vw,82px);height:clamp(54px,16.5vw,82px);
+  border-radius:14px;font-size:24px;
+}
+body.portrait #bJump{
+  width:clamp(72px,22vw,104px);height:clamp(72px,22vw,104px);
+  border-radius:50%;font-size:28px;
+}
+.pad{
+  position:absolute;pointer-events:auto;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;color:rgba(233,229,218,.9);
+  background:rgba(233,229,218,.09);
+  border:2px solid rgba(233,229,218,.32);
+  backdrop-filter:blur(2px);
+  touch-action:none;user-select:none;
+}
+.pad.down{background:rgba(79,242,216,.3);border-color:var(--neon-cyan);}
+#bLeft, #bRight{width:62px;height:62px;border-radius:12px;bottom:calc(18px + env(safe-area-inset-bottom));}
+#bLeft{left:calc(14px + env(safe-area-inset-left));}
+#bRight{left:calc(86px + env(safe-area-inset-left));}
+#bDuck{
+  width:56px;height:52px;border-radius:12px;
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  right:calc(96px + env(safe-area-inset-right));
+}
+#bJump{
+  width:80px;height:80px;border-radius:50%;
+  bottom:calc(14px + env(safe-area-inset-bottom));
+  right:calc(12px + env(safe-area-inset-right));
+  font-size:26px;color:var(--gold);
+  background:rgba(245,197,66,.14);border-color:rgba(245,197,66,.5);
+}
+#bJump.down{background:rgba(245,197,66,.4);border-color:var(--gold);}
+
+@media (max-height:420px){
+  .plaque{display:none;}
+  h1{font-size:clamp(30px,9vw,44px);}
+}
+@media (prefers-reduced-motion:reduce){
+  h1{animation:none;}
+  canvas#game.ring{animation:none;}
+  .marquee .track{animation:none !important;}
+}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="frame">
+    <canvas id="game" width="480" height="270" aria-label="Space City game"></canvas>
+    <div id="veil"></div>
+
+    <!-- ================= HUD ================= -->
+    <div id="hud">
+      <div class="block">
+        <div class="row">
+          <div>
+            <div class="label">Score</div>
+            <div class="val" id="hScore">0</div>
+          </div>
+          <div>
+            <div class="label">Distance</div>
+            <div class="val alt" id="hDist">0m</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">Suit integrity</div>
+          <div id="integrity"><div id="integrityFill"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============== PORTRAIT ARCADE DECK ============== -->
+  <div id="deck">
+    <div id="deckLeft"></div>
+    <div id="deckPlate">Space<br>City</div>
+    <div id="deckRight"></div>
+  </div>
+
+  <!-- ================= START SCREEN ================= -->
+  <div class="screen on" id="startScreen">
+    <div class="dome">
+      <p class="eyebrow">Anzac Avenue · Kallangur</p>
+      <h1>Space<br>City</h1>
+      <p class="sub">THE DOMES RETURN</p>
+    </div>
+    <p class="plaque">
+      It's 1979, you drove straight off the track at Whiteside and ended up in the Binishells of Space City, Kallangur. Collect the nostalgia, avoid the wild, see how long you can last.
+    </p>
+
+    <div class="marquee" id="marquee">
+      <div class="track idle" id="marqueeTrack">Loading high scores…</div>
+    </div>
+
+    <button class="btn" id="playBtn" type="button">Enter the domes</button>
+    <p class="hint" id="controlHint">← → move · ↑ jump · ↓ duck &amp; slide</p>
+  </div>
+
+  <!-- ================= INFO SCREEN ================= -->
+  <div class="screen" id="infoScreen">
+    <p class="eyebrow">Survival Guide</p>
+    <h1 style="font-size:clamp(30px,9vw,46px); color:var(--neon-cyan)">How to survive</h1>
+    <div style="text-align:left; font-size:12px; margin:20px 0; line-height:1.7; color:var(--suit); max-width: 320px; text-shadow:0 1px 2px #000;">
+       <p><strong style="color:var(--neon-cyan)">COLLECT:</strong><br>
+       📼 <b style="color:var(--concrete)">Cassettes</b> (+5)<br>
+       🌋 <b style="color:var(--concrete)">Lava Lamps</b> (+10)<br>
+       💍 <b style="color:var(--concrete)">Mood Rings</b> (+25)<br>
+       🍺 <b style="color:var(--concrete)">XXXX Gold</b> (+25% Suit Integrity)</p>
+       
+       <p><strong style="color:var(--racing)">AVOID:</strong><br>
+       🕷️ <b style="color:var(--concrete)">Spiders</b> (Venom slows you down!)<br>
+       🦘 <b style="color:var(--concrete)">Roos & Teens</b> (Heavy suit damage)</p>
+       
+       <p><strong style="color:var(--gold)">MOVEMENT:</strong><br>
+       Tap ▲ to hop, hold to float higher.<br>
+       Hold ▼ while running to slide under low gaps.</p>
+    </div>
+    <button class="btn ghost" id="resumeBtn" type="button">Resume</button>
+  </div>
+
+  <!-- ================= GAME OVER SCREEN ================= -->
+  <div class="screen" id="overScreen">
+    <p class="eyebrow">Suit integrity failed</p>
+    <h1 style="font-size:clamp(30px,9vw,46px)">Wasted<br>in the dome</h1>
+
+    <div class="tally">
+      <div><span class="k">Score</span><span class="v" id="oScore">0</span></div>
+      <div><span class="k">Distance</span><span class="v" id="oDist">0m</span></div>
+      <div><span class="k">Artifacts</span><span class="v" id="oItems">0</span></div>
+    </div>
+
+    <div class="entry" id="entryForm">
+      <input id="fName" type="text" maxlength="14" placeholder="First name" autocomplete="given-name" enterkeyhint="next">
+      <input id="fSuburb" type="text" maxlength="18" placeholder="Suburb" autocomplete="address-level2" enterkeyhint="done">
+      <button class="btn" id="submitBtn" type="button">Post score</button>
+    </div>
+
+    <p class="status" id="overStatus"></p>
+    <button class="btn ghost" id="againBtn" type="button">Run it again</button>
+  </div>
+</div>
+
+<div id="sysBar">
+  <button id="infoBtn" type="button" style="display:none;">Info</button>
+  <button id="endBtn" type="button" style="display:none;">End Game</button>
+  <button id="muteBtn" type="button">Snd: on</button>
+  <button id="musicBtn" type="button">Mus: on</button>
+</div>
+
+<!-- ================= TOUCH CONTROLS ================= -->
+<div id="touch">
+  <div class="pad" id="bLeft"  role="button" aria-label="Move left">◄</div>
+  <div class="pad" id="bRight" role="button" aria-label="Move right">►</div>
+  <div class="pad" id="bDuck"  role="button" aria-label="Duck">▼</div>
+  <div class="pad" id="bJump"  role="button" aria-label="Jump">▲</div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+   SPACE CITY
+   Single-file HTML5 canvas platformer. No external assets, no dependencies.
+   Everything below is drawn with fillRect / paths at a 480x270 logical
+   resolution, then scaled up with image-rendering: pixelated.
+   ==========================================================================*/
+
+/* ---------------------------------------------------------------------------
+   1. LEADERBOARD CONFIG  —  drop your Google Apps Script Web App URL in here.
+   ---------------------------------------------------------------------------
+   Deploy your Apps Script as: Execute as "Me", Access "Anyone".
+
+   POST payload this game sends (as text/plain, which avoids a CORS preflight
+   that Apps Script can't answer):
+       { name:"Trent", suburb:"Kallangur", score:340, distance:812, items:29 }
+
+   GET this game expects (append ?action=top&limit=10):
+       [ {name:"Trent", suburb:"Kallangur", score:340}, ... ]  sorted desc
+   or  { scores:[ ... ] }  — both shapes are handled.
+
+   While the URL is left as the placeholder below, the game runs completely
+   normally and simply reports the leaderboard as not connected.
+--------------------------------------------------------------------------- */
+const LEADERBOARD_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+const LEADERBOARD_READY = /^https:\/\/script\.google\.com\//.test(LEADERBOARD_URL);
+
+/* ---------------------------------------------------------------------------
+   2. CANVAS + SCALING
+--------------------------------------------------------------------------- */
+/* The WORLD's coordinate system never changes: the concrete is always at
+   y = 226, so physics, jump heights and level geometry are identical on every
+   device. What adapts is the VIEWPORT — how much of that world we show.
+   VW widens on letterbox screens; VH grows taller on phones, which simply
+   means more sky above the same 44px band of concrete. Resizing mid-run is
+   therefore safe: nothing about the level moves. */
+let VW = 480, VH = 270, viewScale = 1, portrait = false;
+const canvas = document.getElementById("game");
+const stage  = document.getElementById("stage");
+const ctx = canvas.getContext("2d", { alpha:false });
+ctx.imageSmoothingEnabled = false;
+
+function fitCanvas(){
+  // visualViewport tracks the real visible area on iOS as the URL bar moves.
+  const vv = window.visualViewport;
+  const vw = Math.max(200, Math.round(vv ? vv.width  : window.innerWidth));
+  const vh = Math.max(200, Math.round(vv ? vv.height : window.innerHeight));
+  portrait = vh > vw * 1.12;
+
+  let deckH = 0;
+  if(portrait){
+    // Reserve a thumb-sized console at the bottom, then fit the canvas above it.
+    deckH = clamp(Math.round(vh * 0.30), 148, 264);
+    // Bigger screens earn a wider field of view instead of bigger pixels.
+    const targetW = clamp(Math.round(vw / 1.1), 330, 520);
+    viewScale = Math.max(vw / targetW, 0.95);
+    VW = clamp(Math.round(vw / viewScale), 300, 820);
+    VH = clamp(Math.round((vh - deckH) / viewScale), 250, 600);
+  } else {
+    viewScale = vh / 270;                          // ~270 logical px tall
+    VW = clamp(Math.round(vw / viewScale), 300, 820);
+    VH = clamp(Math.round(vh / viewScale), 250, 600);
+  }
+
+  // Final guard: never let the canvas overflow the space available to it.
+  const fit = Math.min(vw / (VW * viewScale), (vh - deckH) / (VH * viewScale), 1);
+  viewScale *= fit;
+
+  // iOS fires viewport events continuously while the on-screen keyboard moves.
+  // Reassigning canvas.width reallocates the backing store, so only do it when
+  // the size actually changed.
+  const sig = VW + "x" + VH + "@" + Math.round(VW * viewScale);
+  if(sig !== fitCanvas.last){
+    fitCanvas.last = sig;
+    canvas.width  = VW;                            // resizing clears ctx state
+    canvas.height = VH;
+    canvas.style.width  = Math.round(VW * viewScale) + "px";
+    canvas.style.height = Math.round(VH * viewScale) + "px";
+    ctx.imageSmoothingEnabled = false;
+  }
+
+  // How much concrete sits below the walking surface. Landscape keeps the
+  // original 44px lip; a tall phone viewport gets a deep apron instead, which
+  // lifts the action off the bottom edge and into the middle of the screen.
+  const band = clamp(44 + (VH - 270) * 0.5, 44, 170);
+  camera.y = GROUND_Y - (VH - band);
+  stage.style.setProperty("--deckH", (vh - Math.round(VH * viewScale)) + "px");
+  document.body.classList.toggle("portrait", portrait);
+  document.body.classList.toggle("landscape", !portrait);
+  layoutPads();
+}
+
+/** Seat the arcade buttons in the deck (portrait) or overlay them (landscape). */
+function layoutPads(){
+  const ids = ["bLeft","bRight","bDuck","bJump"];
+  const host = portrait ? document.getElementById("deckLeft") : document.getElementById("touch");
+  if(document.getElementById("bLeft").parentNode === host) return;   // already there
+  if(portrait){
+    document.getElementById("deckLeft").append(document.getElementById("bLeft"),
+                                               document.getElementById("bRight"));
+    document.getElementById("deckRight").append(document.getElementById("bDuck"),
+                                                document.getElementById("bJump"));
+  } else {
+    const t = document.getElementById("touch");
+    ids.forEach(id => t.append(document.getElementById(id)));
+  }
+}
+
+window.addEventListener("resize", fitCanvas);
+window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 150));
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", fitCanvas);
+  window.visualViewport.addEventListener("scroll", fitCanvas);
+}
+
+/* ---------------------------------------------------------------------------
+   3. TINY UTILITIES
+--------------------------------------------------------------------------- */
+const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
+const rnd   = (a,b) => a + Math.random() * (b - a);
+const rndi  = (a,b) => Math.floor(rnd(a, b + 1));
+const pick  = arr => arr[Math.floor(Math.random() * arr.length)];
+
+/** Axis-aligned bounding box overlap test. */
+function hit(a, b){
+  return a.x < b.x + b.w && a.x + a.w > b.x &&
+         a.y < b.y + b.h && a.y + a.h > b.y;
+}
+/** Solid-colour pixel rect, snapped to the logical pixel grid. */
+function px(x, y, w, h, col){
+  ctx.fillStyle = col;
+  ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+
+/* ---------------------------------------------------------------------------
+   4. AUDIO — a handful of WebAudio blips and a scifi bgm synth.
+--------------------------------------------------------------------------- */
+const Sfx = {
+  ac:null, muted:false,
+  init(){ if(!this.ac){ try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } },
+  resume(){ if(this.ac && this.ac.state === "suspended") this.ac.resume(); },
+  /** @param {string} type oscillator shape @param {number} f0 start Hz @param {number} f1 end Hz */
+  tone(type, f0, f1, dur, vol){
+    if(this.muted || !this.ac) return;
+    const t = this.ac.currentTime;
+    const o = this.ac.createOscillator(), g = this.ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(this.ac.destination);
+    o.start(t); o.stop(t + dur + .02);
+  },
+  jump()  { this.tone("square",  330, 620, .13, .05); },
+  pickup(){ this.tone("square",  740, 1180,.09, .05); },
+  lamp()  { this.tone("square",  560, 1320,.14, .055); },
+  ring()  { this.tone("triangle",520, 1760,.42, .07); },
+  beer()  { this.tone("sine",    200, 460, .22, .06); },
+  hurt()  { this.tone("sawtooth",260, 70,  .26, .06); },
+  clang() { this.tone("square",  150, 90,  .09, .045); },
+  dead()  { this.tone("sawtooth",380, 45,  .95, .07); }
+};
+
+const Bgm = {
+  ctx: null, osc1: null, osc2: null, filter: null, lfo: null, gain: null, muted: false,
+  init() {
+    if(!this.ctx) {
+      try {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.gain = this.ctx.createGain();
+        this.gain.gain.value = this.muted ? 0 : 0.12;
+        this.gain.connect(this.ctx.destination);
+
+        // Lowpass filter for the drone
+        this.filter = this.ctx.createBiquadFilter();
+        this.filter.type = "lowpass";
+        this.filter.frequency.value = 350;
+        this.filter.connect(this.gain);
+
+        // Slow LFO sweeping the filter
+        this.lfo = this.ctx.createOscillator();
+        this.lfo.type = "sine";
+        this.lfo.frequency.value = 0.15;
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.value = 200;
+        this.lfo.connect(lfoGain);
+        lfoGain.connect(this.filter.frequency);
+
+        // Drone synths
+        this.osc1 = this.ctx.createOscillator();
+        this.osc1.type = "sawtooth";
+        this.osc1.frequency.value = 65.41; // C2
+
+        this.osc2 = this.ctx.createOscillator();
+        this.osc2.type = "square";
+        this.osc2.frequency.value = 65.41 * 1.503; // ~G2 (detuned perfect fifth)
+
+        this.osc1.connect(this.filter);
+        this.osc2.connect(this.filter);
+
+        this.osc1.start();
+        this.osc2.start();
+        this.lfo.start();
+      } catch(e){}
+    }
+  },
+  start() {
+    this.init();
+    if(this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+    if(this.gain) {
+      this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
+      this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
+      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.12, this.ctx.currentTime + 1);
+    }
+  },
+  stop() {
+    if(this.ctx && this.gain) {
+      this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
+      this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
+      this.gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 1);
+    }
+  },
+  toggle() {
+    this.muted = !this.muted;
+    if(this.ctx && this.gain) {
+      this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
+      this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
+      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.12, this.ctx.currentTime + 0.3);
+    }
+  },
+  blip() {
+    if(this.muted || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const b = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    b.type = "sine";
+    b.frequency.setValueAtTime(pick([196, 261.63, 329.63, 392, 523.25]), t);
+    g.gain.setValueAtTime(0.015, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+    b.connect(g); g.connect(this.ctx.destination);
+    b.start(t); b.stop(t + 0.85);
+  }
+};
+
+/* ---------------------------------------------------------------------------
+   5. INPUT — keyboard and touch write into the SAME state object, so both work
+   at once with no "mobile mode" switch.
+--------------------------------------------------------------------------- */
+const input = { left:false, right:false, jump:false, down:false, jumpPressed:false };
+
+const KEYMAP = {
+  ArrowLeft:"left",  KeyA:"left",
+  ArrowRight:"right",KeyD:"right",
+  ArrowUp:"jump",    KeyW:"jump", Space:"jump",
+  ArrowDown:"down",  KeyS:"down"
+};
+
+window.addEventListener("keydown", e => {
+  const k = KEYMAP[e.code];
+  if(k){
+    e.preventDefault();
+    if(k === "jump" && !input.jump) input.jumpPressed = true;   // edge-trigger
+    input[k] = true;
+    Sfx.init(); Sfx.resume();
+    Bgm.init(); if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+  }
+  if((e.code === "Enter" || e.code === "Space") && (game.state === "menu" || game.state === "over")){
+    // Enter starts / restarts, unless the player is typing their name.
+    if(document.activeElement && document.activeElement.tagName === "INPUT") return;
+    e.preventDefault();
+    if(game.state === "menu") startGame(); else if(game.state === "over") showMenu();
+  }
+}, { passive:false });
+
+window.addEventListener("keyup", e => {
+  const k = KEYMAP[e.code];
+  if(k){ e.preventDefault(); input[k] = false; }
+}, { passive:false });
+
+// --- virtual arcade buttons -------------------------------------------------
+const touchLayer = document.getElementById("touch");
+function bindPad(id, key){
+  const el = document.getElementById(id);
+  const on = e => {
+    e.preventDefault();                 // stop scroll / zoom / double-tap
+    if(key === "jump" && !input.jump) input.jumpPressed = true;
+    input[key] = true;
+    el.classList.add("down");
+    Sfx.init(); Sfx.resume();
+    Bgm.init(); if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+  };
+  const off = e => { e.preventDefault(); input[key] = false; el.classList.remove("down"); };
+  el.addEventListener("touchstart", on,  { passive:false });
+  el.addEventListener("touchend",   off, { passive:false });
+  el.addEventListener("touchcancel",off, { passive:false });
+  // touchmove is swallowed so dragging a thumb never scrolls the page
+  el.addEventListener("touchmove",  e => e.preventDefault(), { passive:false });
+  // mouse fallback so the pads are testable on desktop
+  el.addEventListener("mousedown", on);
+  window.addEventListener("mouseup", off);
+}
+bindPad("bLeft","left"); bindPad("bRight","right");
+bindPad("bJump","jump"); bindPad("bDuck","down");
+
+// Belt-and-braces: block page-level gestures during play.
+document.addEventListener("touchmove", e => { if(game.state === "play") e.preventDefault(); }, { passive:false });
+document.addEventListener("gesturestart", e => e.preventDefault());
+document.addEventListener("dblclick", e => e.preventDefault());
+
+const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0 ||
+                window.matchMedia("(pointer: coarse)").matches;
+if(isTouch){
+  document.getElementById("controlHint").textContent = "◄ ► move · ▲ jump · ▼ duck & slide";
+}
+
+/* ---------------------------------------------------------------------------
+   6. PHYSICS CONSTANTS
+   ---------------------------------------------------------------------------
+   Units are logical pixels per 1/60s tick. The suit is the whole point of the
+   feel here: gravity is deliberately weak, and it gets weaker again while the
+   player holds jump on the way up, giving the astronaut "float" arc.
+--------------------------------------------------------------------------- */
+const GRAVITY      = 0.34;   // downward accel per tick
+const FLOAT_GRAV   = 0.60;   // gravity multiplier while ascending + holding jump
+const APEX_GRAV    = 0.70;   // extra hang time near the top of the arc
+const MAX_FALL     = 6.2;    // terminal velocity
+// Tap jump clears ~40px; a held jump floats to ~64px and covers ~100px of gap.
+const JUMP_V       = -5.2;   // launch velocity
+const CUT_JUMP     = -2.0;   // velocity cap when jump is released early
+const ACCEL        = 0.46;   // ground/air horizontal acceleration
+const FRICTION     = 0.80;   // horizontal damping when no direction is held
+const MAX_SPEED    = 2.05;
+const POISON_MULT  = 0.52;   // speed multiplier while spider venom is active
+const DUCK_MULT    = 0.55;
+const COYOTE       = 6;      // ticks of grace after walking off a ledge
+const JUMP_BUFFER  = 7;      // ticks a jump press is remembered before landing
+const GROUND_Y     = 226;    // top surface of the standard ground plane
+const GROUND_Y_DEPTH = 260;  // how far the concrete extends below that surface
+const PLAYER_W     = 10, STAND_H = 20, DUCK_H = 12;
+
+/* ---------------------------------------------------------------------------
+   7. WORLD STATE
+--------------------------------------------------------------------------- */
+const game = {
+  state:"menu",          // menu | play | info | over
+  score:0, items:0, distance:0, best:0,
+  shake:0, time:0, spawnX:0, difficulty:1
+};
+
+let solids   = [];   // ground slabs, concrete platforms, milk crates, wheelie bins
+let pickups  = [];   // cassettes, lava lamps, mood rings, XXXX stubbies
+let enemies  = [];   // spiders, teenagers, kangaroos
+let props    = [];   // non-colliding scenery (pillars, signage, rubble)
+let popups   = [];   // floating "+5" score text
+let dust     = [];   // particle puffs
+
+const player = {
+  x:60, y:GROUND_Y - STAND_H, w:PLAYER_W, h:STAND_H,
+  vx:0, vy:0,
+  onGround:false, ducking:false, facing:1,
+  integrity:100, invuln:0, poison:0,
+  coyote:0, buffer:0, anim:0, thrust:0
+};
+
+const camera = { x:0, y:0 };
+
+/* ---------------------------------------------------------------------------
+   8. LEVEL STREAMING
+   ---------------------------------------------------------------------------
+   Endless run: chunks are generated just ahead of the camera and culled once
+   they're well behind it, so memory stays flat no matter how far you get.
+--------------------------------------------------------------------------- */
+function addSolid(x, y, w, h, kind){ solids.push({ x, y, w, h, kind }); }
+function addGround(x, w){ addSolid(x, GROUND_Y, w, GROUND_Y_DEPTH, "ground"); }
+
+function addPickup(x, y, kind){
+  pickups.push({ x, y, w:kind === "beer" ? 7 : 9, h:kind === "beer" ? 12 : 9, kind, bob:Math.random() * 6.28 });
+}
+
+function addEnemy(kind, x, y, opts){
+  const e = Object.assign({
+    kind, x, y, w:12, h:10, vx:0, vy:0, dir:Math.random() < .5 ? -1 : 1,
+    onGround:false, timer:rndi(30,90), state:"idle", anim:0, homeX:x
+  }, opts || {});
+  if(kind === "redback"){ e.w = 11; e.h = 8; e.speed = 0.32 + game.difficulty * .05; }
+  if(kind === "huntsman"){ e.w = 13; e.h = 9; e.state = "hang"; e.speed = 0.42 + game.difficulty * .05; }
+  if(kind === "teen"){ e.w = 10; e.h = 20; e.y = y - 10; e.speed = 0.75 + game.difficulty * .08; }
+  if(kind === "roo"){ e.w = 16; e.h = 22; e.y = y - 12; e.speed = 1.15 + game.difficulty * .1; }
+  enemies.push(e);
+}
+
+// Fading 70s signage for the mid parallax layer.
+const SIGN_TEXT = ["BARRY & ROBERTS","SPACE CITY","MILK BAR","CHEMIST","LAY-BY","DISCS","TAB","SNACK BAR"];
+
+/** Scenery only — never collides, purely for the wasteland silhouette. */
+function addProps(x, w){
+  if(Math.random() < .55){
+    props.push({ type:"pillar", x:x + rnd(20, w - 40), y:GROUND_Y - rnd(34, 74), w:rndi(6,10), h:80 });
+  }
+  if(Math.random() < .4){
+    props.push({ type:"sign", x:x + rnd(30, w - 60), y:rnd(70, 140),
+                 text:pick(SIGN_TEXT), col:Math.random() < .5 ? "#4ff2d8" : "#ff4f9e",
+                 flick:Math.random() * 100 });
+  }
+  if(Math.random() < .7){
+    props.push({ type:"rubble", x:x + rnd(10, w - 20), y:GROUND_Y - 4, w:rndi(6,16), h:4 });
+  }
+}
+
+/* --- chunk builders. Each returns the x where the next chunk should start. --- */
+
+/** Open concrete floor: bins to hop, tapes to sweep up. */
+function chunkFlat(x){
+  const w = 220;
+  addGround(x, w);
+  const y = GROUND_Y;
+  // Green council wheelie bin: solid, and killing your momentum is the point.
+  if(Math.random() < .8) addSolid(x + rnd(70, 150), y - 17, 13, 17, "bin");
+  // A shallow arc of cassettes, sitting on a natural jump path.
+  const n = rndi(3,5), bx = x + 40;
+  for(let i = 0; i < n; i++){
+    addPickup(bx + i * 22, y - 34 - Math.sin(i / (n - 1) * Math.PI) * 20, "cassette");
+  }
+  if(Math.random() < .55) addEnemy("redback", x + rnd(120, 190), y - 8, { patrol:70 });
+  addProps(x, w);
+  return x + w;
+}
+
+/** Toppled milk crates, stacked into a climb. Good stuff sits on top. */
+function chunkCrates(x){
+  const w = 250;
+  addGround(x, w);
+  const y = GROUND_Y, cx = x + 70;
+  const stacks = rndi(2,3);
+  for(let s = 0; s < stacks; s++){
+    const tall = rndi(1, 2 + (game.difficulty > 1.6 ? 1 : 0));
+    const sx = cx + s * 46;
+    for(let i = 0; i < tall; i++) addSolid(sx, y - 13 * (i + 1), 14, 13, "crate");
+    const topY = y - 13 * tall;
+    if(s === stacks - 1 && Math.random() < .6) addPickup(sx + 3, topY - 14, "beer");
+    else addPickup(sx + 3, topY - 12, Math.random() < .4 ? "lamp" : "cassette");
+  }
+  if(Math.random() < .5) addEnemy("teen", x + rnd(160, 230), y, {});
+  addProps(x, w);
+  return x + w;
+}
+
+/** A hole in the dome floor. Low gravity makes this generous — but not free. */
+function chunkPit(x){
+  addGround(x, 100);
+  const gap = 46 + Math.random() * 16 + game.difficulty * 3;
+  // A floating concrete slab breaks the gap into two comfortable hops.
+  const slabW = 34;
+  const slabX = x + 100 + gap / 2 - slabW / 2;
+  addSolid(slabX, GROUND_Y - 42, slabW, 8, "slab");
+  // The rarest artifact hangs over the void, because of course it does.
+  addPickup(slabX + slabW / 2 - 4, GROUND_Y - 70, Math.random() < .5 ? "ring" : "lamp");
+  const after = x + 100 + gap;
+  addGround(after, 130);
+  addProps(x, 100);
+  return after + 130;
+}
+
+/** Low concrete overhang: you must duck or slide through it. */
+function chunkCrawl(x){
+  const w = 240;
+  addGround(x, w);
+  const y = GROUND_Y;
+  const ox = x + 80, ow = 78;
+  addSolid(ox, y - 26, ow, 10, "slab");      // bottom edge sits 16px above floor
+  // Huntsman on a dragline in the open air just past the crawl — it hangs well
+  // clear of the duck gap so it drops on you rather than sitting inside it.
+  const hx = ox + ow + 34;
+  addEnemy("huntsman", hx - 6, y - 74, { anchorY:y - 74, dropX:hx });
+  addPickup(ox + 20, y - 12, "cassette");
+  addPickup(ox + 46, y - 12, "cassette");
+  if(Math.random() < .5) addSolid(x + rnd(180, 215), y - 17, 13, 17, "bin");
+  addProps(x, w);
+  return x + w;
+}
+
+/** Open paddock. The roos own this bit. */
+function chunkRoos(x){
+  const w = 270;
+  addGround(x, w);
+  const y = GROUND_Y;
+  const n = game.difficulty > 1.8 ? 2 : 1;
+  for(let i = 0; i < n; i++) addEnemy("roo", x + 110 + i * 80, y, {});
+  addPickup(x + 60, y - 30, "cassette");
+  addPickup(x + 200, y - 30, "lamp");
+  if(Math.random() < .4) addPickup(x + 140, y - 12, "beer");
+  addProps(x, w);
+  return x + w;
+}
+
+/** Raised alcove with a stubby tucked into it. Worth the detour. */
+function chunkAlcove(x){
+  const w = 240;
+  addGround(x, w);
+  const y = GROUND_Y;
+  addSolid(x + 60, y - 44, 60, 9, "slab");
+  addSolid(x + 150, y - 74, 52, 9, "slab");
+  addPickup(x + 82, y - 58, "beer");
+  addPickup(x + 170, y - 88, Math.random() < .35 ? "ring" : "lamp");
+  addPickup(x + 20, y - 14, "cassette");
+  if(Math.random() < .6) addEnemy("redback", x + rnd(200, 230), y - 8, { patrol:40 });
+  addProps(x, w);
+  return x + w;
+}
+
+/** Teenagers loitering by the crates. Erratic, and they do not move for you. */
+function chunkTeens(x){
+  const w = 250;
+  addGround(x, w);
+  const y = GROUND_Y;
+  addSolid(x + 100, y - 13, 14, 13, "crate");
+  addSolid(x + 114, y - 13, 14, 13, "crate");
+  addSolid(x + 114, y - 26, 14, 13, "crate");
+  addEnemy("teen", x + 70,  y, {});
+  addEnemy("teen", x + 180, y, {});
+  addPickup(x + 121, y - 40, "lamp");
+  addPickup(x + 210, y - 32, "cassette");
+  addProps(x, w);
+  return x + w;
+}
+
+const CHUNKS = [chunkFlat, chunkCrates, chunkPit, chunkCrawl, chunkRoos, chunkAlcove, chunkTeens];
+
+/** Generate world until we're comfortably ahead of the camera. */
+function streamWorld(){
+  while(game.spawnX < camera.x + VW + 420){
+    // Difficulty creeps up with distance and gates the nastier chunk types.
+    const pool = game.difficulty < 1.25
+      ? [chunkFlat, chunkCrates, chunkFlat, chunkAlcove, chunkPit]
+      : CHUNKS;
+    game.spawnX = pick(pool)(game.spawnX);
+  }
+}
+
+/** Drop anything that has scrolled well off the left edge. */
+function cullWorld(){
+  const edge = camera.x - 260;
+  solids  = solids.filter(s => s.x + s.w > edge);
+  pickups = pickups.filter(p => p.x + p.w > edge);
+  enemies = enemies.filter(e => e.x + e.w > edge);
+  props   = props.filter(p => p.x + (p.w || 90) > edge);
+}
+
+/* ---------------------------------------------------------------------------
+   9. COLLISION
+   ---------------------------------------------------------------------------
+   Classic swept-free AABB resolution: move on one axis, resolve overlaps on
+   that axis only, then repeat for the other. Doing X and Y separately is what
+   stops the player from catching on the seams between adjacent tiles.
+--------------------------------------------------------------------------- */
+function nearbySolids(box, pad){
+  const p = pad || 40;
+  return solids.filter(s => s.x < box.x + box.w + p && s.x + s.w > box.x - p);
+}
+
+/**
+ * Move a body along X and push it out of anything solid.
+ * @returns {object|null} the solid that blocked it, if any
+ */
+function moveX(body, dx){
+  body.x += dx;
+  let blocker = null;
+  for(const s of nearbySolids(body)){
+    if(!hit(body, s)) continue;
+    if(dx > 0) body.x = s.x - body.w;
+    else if(dx < 0) body.x = s.x + s.w;
+    body.vx = 0;
+    blocker = s;
+  }
+  return blocker;
+}
+
+/** Move along Y, resolve, and report whether we landed on something. */
+function moveY(body, dy){
+  body.y += dy;
+  body.onGround = false;
+  for(const s of nearbySolids(body)){
+    if(!hit(body, s)) continue;
+    if(dy > 0){ body.y = s.y - body.h; body.onGround = true; }
+    else if(dy < 0){ body.y = s.y + s.h; }
+    body.vy = 0;
+  }
+}
+
+/** Is there room to stand back up here? */
+function canStand(){
+  const test = { x:player.x, y:player.y - (STAND_H - DUCK_H), w:PLAYER_W, h:STAND_H };
+  return !nearbySolids(test).some(s => hit(test, s));
+}
+
+/* ---------------------------------------------------------------------------
+   10. PLAYER UPDATE
+--------------------------------------------------------------------------- */
+function damage(amount, poisonTicks){
+  if(player.invuln > 0) return;
+  player.integrity -= amount;
+  player.invuln = 78;                       // ~1.3s of i-frames
+  if(poisonTicks) player.poison = poisonTicks;
+  game.shake = 7;
+  player.vy = -2.4;                          // small knockback pop
+  player.vx = -player.facing * 1.7;
+  Sfx.hurt();
+  if(player.integrity <= 0){
+    player.integrity = 0;
+    endRun();
+  }
+}
+
+function updatePlayer(){
+  // --- ducking ------------------------------------------------------------
+  const wantDuck = input.down && player.onGround;
+  if(wantDuck && !player.ducking){
+    player.ducking = true;
+    player.y += STAND_H - DUCK_H;            // shrink from the top down
+    player.h = DUCK_H;
+  } else if(!wantDuck && player.ducking && canStand()){
+    player.ducking = false;
+    player.y -= STAND_H - DUCK_H;
+    player.h = STAND_H;
+  }
+
+  // --- horizontal ---------------------------------------------------------
+  // One speed cap, adjusted for venom and for being folded up in a crawl.
+  let top = MAX_SPEED;
+  if(player.poison > 0) top *= POISON_MULT;
+  if(player.ducking)    top *= DUCK_MULT;
+
+  const accel = ACCEL * (player.ducking ? 0.45 : 1);   // crawling is laboured
+  if(input.left)  { player.vx -= accel; player.facing = -1; }
+  if(input.right) { player.vx += accel; player.facing =  1; }
+
+  if(Math.abs(player.vx) > top){
+    // Above the cap means you ducked while already running — that's a slide.
+    // Bleed the momentum off gradually instead of snapping to crawl speed.
+    player.vx *= 0.955;
+  } else {
+    player.vx = clamp(player.vx, -top, top);
+    if(!input.left && !input.right) player.vx *= FRICTION;
+  }
+  if(Math.abs(player.vx) < 0.02) player.vx = 0;
+
+  // --- jump ---------------------------------------------------------------
+  if(player.onGround) player.coyote = COYOTE; else if(player.coyote > 0) player.coyote--;
+  if(input.jumpPressed){ player.buffer = JUMP_BUFFER; input.jumpPressed = false; }
+  if(player.buffer > 0) player.buffer--;
+
+  if(player.buffer > 0 && player.coyote > 0 && !player.ducking){
+    player.vy = JUMP_V;
+    player.onGround = false;
+    player.coyote = 0; player.buffer = 0;
+    player.thrust = 12;
+    Sfx.jump();
+    for(let i = 0; i < 5; i++) puff(player.x + 5, player.y + player.h, "#c9c0b4");
+  }
+  // Variable jump height: let go early and the arc is cut short.
+  if(!input.jump && player.vy < CUT_JUMP) player.vy = CUT_JUMP;
+
+  // --- gravity, with the spacesuit float ----------------------------------
+  let g = GRAVITY;
+  if(player.vy < 0 && input.jump) g *= FLOAT_GRAV;   // held ascent = floaty
+  if(Math.abs(player.vy) < 0.7)   g *= APEX_GRAV;    // hang at the apex
+  player.vy = Math.min(player.vy + g, MAX_FALL);
+
+  // --- integrate + resolve ------------------------------------------------
+  const speedIntoWall = Math.abs(player.vx);
+  const blocked = moveX(player, player.vx);
+  if(blocked && blocked.kind === "bin"){
+    // Wheelie bins don't hurt, they just kill your run-up. Very Queensland.
+    player.vx = 0;
+    if(speedIntoWall > 0.6){ Sfx.clang(); game.shake = 3; }
+  }
+  moveY(player, player.vy);
+
+  // Soft wall at the left edge of the streamed world so you can't reverse
+  // into culled, non-existent geometry.
+  if(player.x < camera.x + 6){ player.x = camera.x + 6; if(player.vx < 0) player.vx = 0; }
+
+  // --- fell down a hole ---------------------------------------------------
+  if(player.y > GROUND_Y + 140){
+    // Emergency suit thrusters: costly, but the run continues.
+    const landing = solids.filter(s => s.kind === "ground" && s.x + s.w > player.x + 30)
+                          .sort((a,b) => a.x - b.x)[0];
+    player.x = landing ? landing.x + 24 : camera.x + 60;
+    player.y = GROUND_Y - player.h - 40;
+    player.vx = 0; player.vy = 0;
+    player.invuln = 90;
+    player.integrity -= 30;
+    game.shake = 9;
+    Sfx.dead();
+    if(player.integrity <= 0){ player.integrity = 0; endRun(); }
+  }
+
+  // --- timers + animation -------------------------------------------------
+  if(player.invuln > 0) player.invuln--;
+  if(player.poison > 0) player.poison--;
+  if(player.thrust > 0) player.thrust--;
+  player.anim += Math.abs(player.vx) * 0.22;
+
+  // Distance is measured in metres, at a nicely arbitrary 16px to the metre.
+  game.distance = Math.max(game.distance, Math.floor(player.x / 16));
+  game.difficulty = clamp(1 + game.distance / 520, 1, 3.2);
+}
+
+/* ---------------------------------------------------------------------------
+   11. ENEMIES
+--------------------------------------------------------------------------- */
+/** Shared gravity + ground collision for anything that walks or hops. */
+function enemyPhysics(e){
+  e.vy = Math.min(e.vy + GRAVITY, MAX_FALL);
+  moveX(e, e.vx);
+  moveY(e, e.vy);
+}
+
+/** Is there floor under this point? Used so crawlers don't walk off ledges. */
+function groundAhead(e, dir){
+  const probe = { x:e.x + (dir > 0 ? e.w + 2 : -3), y:e.y + e.h + 2, w:1, h:4 };
+  return nearbySolids(probe, 20).some(s => hit(probe, s));
+}
+
+function updateEnemies(){
+  for(const e of enemies){
+    e.anim += 0.14;
+
+    if(e.kind === "redback"){
+      // Ground crawler: patrols, turns at walls, edges and patrol limits.
+      e.vx = e.dir * e.speed;
+      const wall = moveX(e, e.vx);
+      if(wall || !groundAhead(e, e.dir) || Math.abs(e.x - e.homeX) > (e.patrol || 60)) e.dir *= -1;
+      e.vy = Math.min(e.vy + GRAVITY, MAX_FALL);
+      moveY(e, e.vy);
+
+    } else if(e.kind === "huntsman"){
+      // Ceiling dweller: hangs, drops when you walk beneath, then chases slowly.
+      if(e.state === "hang"){
+        e.y = e.anchorY + Math.sin(e.anim * .6) * 0.8;    // idle sway
+        if(Math.abs((player.x + player.w / 2) - e.dropX) < 26 && player.y > e.y){
+          e.state = "drop"; e.vy = 0;
+        }
+      } else {
+        if(e.state === "drop" && e.onGround) e.state = "crawl";
+        e.dir = (player.x < e.x) ? -1 : 1;
+        e.vx = e.state === "crawl" ? e.dir * e.speed : 0;
+        enemyPhysics(e);
+      }
+
+    } else if(e.kind === "teen"){
+      // Erratic loiterer: random direction changes and the odd pointless jump.
+      e.timer--;
+      if(e.timer <= 0){
+        e.timer = rndi(24, 80);
+        const roll = Math.random();
+        e.dir = roll < .38 ? -1 : roll < .76 ? 1 : 0;
+        if(Math.random() < .3 && e.onGround) e.vy = -4.1;
+      }
+      e.vx = e.dir * e.speed;
+      const wall = moveX(e, e.vx);
+      if(wall || (e.onGround && !groundAhead(e, e.dir) && e.dir !== 0)) e.dir *= -1;
+      e.vy = Math.min(e.vy + GRAVITY, MAX_FALL);
+      moveY(e, e.vy);
+
+    } else if(e.kind === "roo"){
+      // Hopper: charges when you're close, otherwise bounces around on the spot.
+      const dist = (player.x + player.w / 2) - (e.x + e.w / 2);
+      if(e.onGround){
+        e.timer--;
+        e.vx *= 0.82;
+        if(e.timer <= 0){
+          e.timer = rndi(34, 62);
+          const aggro = Math.abs(dist) < 130;
+          e.dir = aggro ? Math.sign(dist) || 1 : (Math.random() < .5 ? -1 : 1);
+          e.vy = aggro ? -4.9 : -3.9;
+          e.vx = e.dir * e.speed * (aggro ? 1 : .6);
+        }
+      }
+      const wall = moveX(e, e.vx);
+      if(wall) e.vx *= -0.4;
+      e.vy = Math.min(e.vy + GRAVITY, MAX_FALL);
+      moveY(e, e.vy);
+    }
+
+    // --- contact with the player -----------------------------------------
+    if(hit(player, e) && player.invuln === 0){
+      if(e.kind === "redback" || e.kind === "huntsman"){
+        damage(e.kind === "huntsman" ? 16 : 12, 220);   // venom = slowed for ~3.6s
+      } else if(e.kind === "teen"){
+        damage(11, 0);
+      } else {
+        damage(18, 0);
+      }
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   12. PICKUPS
+--------------------------------------------------------------------------- */
+const POINTS = { cassette:5, lamp:10, ring:25 };
+
+function updatePickups(){
+  for(let i = pickups.length - 1; i >= 0; i--){
+    const p = pickups[i];
+    p.bob += 0.09;
+    if(!hit(player, p)) continue;
+
+    if(p.kind === "beer"){
+      player.integrity = Math.min(100, player.integrity + 25);
+      addPopup(p.x, p.y, "SUIT +25", "#f5c542");
+      Sfx.beer();
+    } else {
+      const pts = POINTS[p.kind];
+      game.score += pts;
+      game.items++;
+      addPopup(p.x, p.y, "+" + pts, p.kind === "ring" ? "#ff4f9e" : "#4ff2d8");
+      if(p.kind === "ring"){
+        Sfx.ring();
+        // The mood ring's chromatic wash, done in CSS on the canvas element.
+        canvas.classList.remove("ring");
+        void canvas.offsetWidth;               // force reflow to restart it
+        canvas.classList.add("ring");
+        for(let k = 0; k < 12; k++) puff(p.x + 4, p.y + 4, pick(["#ff4f9e","#4ff2d8","#f5c542"]));
+      } else if(p.kind === "lamp") Sfx.lamp();
+      else Sfx.pickup();
+    }
+    pickups.splice(i, 1);
+  }
+}
+
+function addPopup(x, y, text, col){ popups.push({ x, y, text, col, life:46 }); }
+function puff(x, y, col){
+  dust.push({ x, y, vx:rnd(-.8,.8), vy:rnd(-1.2,-.2), life:rndi(16,30), col });
+}
+function updateParticles(){
+  for(let i = popups.length - 1; i >= 0; i--){
+    const p = popups[i]; p.y -= 0.42; if(--p.life <= 0) popups.splice(i,1);
+  }
+  for(let i = dust.length - 1; i >= 0; i--){
+    const d = dust[i];
+    d.x += d.vx; d.y += d.vy; d.vy += 0.045;
+    if(--d.life <= 0) dust.splice(i,1);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   13. RENDERING — background
+--------------------------------------------------------------------------- */
+function drawSky(){
+  // Everything here is composed against the *visible* sky height, so a tall
+  // phone viewport gets a taller dusk rather than a stretched one.
+  const top  = camera.y;                    // world-y of the screen's top edge
+  const skyH = GROUND_Y - top;
+
+  // Clear first — the void under a pit has no geometry to draw over it.
+  px(0, top, VW, VH, "#0d0812");
+
+  const g = ctx.createLinearGradient(0, top, 0, GROUND_Y);
+  g.addColorStop(0,   "#241536");
+  g.addColorStop(.42, "#6b3565");
+  g.addColorStop(.74, "#c25a52");
+  g.addColorStop(1,   "#e0714f");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, top - 10, VW, skyH + 14);
+
+  // Stars, worth drawing once there's real sky to put them in.
+  if(skyH > 250){
+    const span = VW + 60;
+    for(let i = 0; i < 46; i++){
+      let sx = ((i * 97 + 13) - camera.x * 0.03) % span;
+      if(sx < 0) sx += span;
+      const sy = top + 8 + ((i * 61) % Math.max(20, Math.floor(skyH * 0.46)));
+      px(sx - 30, sy, 1, 1, i % 3 ? "rgba(233,229,218,.22)" : "rgba(233,229,218,.45)");
+    }
+  }
+
+  // Low sun, sitting in the haze, held a sensible distance above the horizon.
+  const sunY = GROUND_Y - clamp(skyH * 0.28, 70, 168);
+  const sunX = VW * 0.78 - (camera.x * 0.02) % (VW + 120);
+  ctx.fillStyle = "#ffcf6b";
+  ctx.beginPath(); ctx.arc(sunX, sunY, 26, 0, 6.2832); ctx.fill();
+  // Haze bands cutting across it — the 70s poster trick.
+  for(let i = 0; i < 5; i++){
+    px(0, sunY - 12 + i * 9, VW, 3, "rgba(224,113,79,0.42)");
+  }
+}
+
+/** Distant dome silhouettes across the bay. */
+function drawDomes(offset, baseY, radius, spacing, col){
+  ctx.fillStyle = col;
+  const start = Math.floor(offset / spacing) - 1;
+  for(let i = start; i < start + Math.ceil(VW / spacing) + 3; i++){
+    const cx = i * spacing - offset;
+    const r  = radius * (0.72 + ((i * 37) % 10) / 22);
+    ctx.beginPath();
+    ctx.moveTo(cx - r, baseY);
+    ctx.arc(cx, baseY, r, Math.PI, 0);
+    ctx.lineTo(cx + r, baseY);
+    ctx.closePath();
+    ctx.fill();
+  }
+  px(0, baseY, VW, GROUND_Y - baseY + 4, col);
+}
+
+function drawParallax(){
+  drawSky();
+  // Far layer: the skyline of domes, almost lost in the haze.
+  drawDomes(camera.x * 0.12, 196, 40, 96, "rgba(63,40,74,0.72)");
+  // Mid layer: bigger, closer, darker.
+  drawDomes(camera.x * 0.3,  208, 58, 132, "rgba(42,27,52,0.9)");
+
+  // Fading neon on the mid layer.
+  ctx.textAlign = "center";
+  ctx.font = "6px " + '"Courier New", monospace';
+  for(const p of props){
+    if(p.type !== "sign") continue;
+    const sx = p.x - camera.x * 0.3;
+    if(sx < -80 || sx > VW + 80) continue;
+    const alive = (Math.sin((game.time + p.flick) * 0.09) > -0.72);   // dying tube
+    ctx.globalAlpha = alive ? 0.62 : 0.13;
+    ctx.fillStyle = p.col;
+    ctx.fillText(p.text, sx, p.y);
+    px(sx - p.text.length * 1.9, p.y + 3, p.text.length * 3.8, 1, p.col);
+    ctx.globalAlpha = 1;
+  }
+
+  // Near layer: broken pillars and rubble in silhouette.
+  for(const p of props){
+    const sx = p.x - camera.x * 0.62;
+    if(sx < -40 || sx > VW + 40) continue;
+    if(p.type === "pillar") px(sx, p.y, p.w, p.h, "rgba(30,22,38,0.88)");
+  }
+}
+
+/** Foreground apron. Only does anything when the viewport is tall enough to
+    show concrete below the walking surface — i.e. on phones in portrait. */
+function drawForeground(){
+  const bottom = camera.y + VH;
+  const apron  = bottom - (GROUND_Y + 44);
+  if(apron <= 2) return;
+
+  // Only a shallow lip of concrete stays lit; the rest falls away into the
+  // dark of the dome floor, so the bottom third reads as depth, not as a wall.
+  const g = ctx.createLinearGradient(0, GROUND_Y + 16, 0, bottom);
+  g.addColorStop(0,   "rgba(13,8,18,0)");
+  g.addColorStop(.42, "rgba(13,8,18,0.78)");
+  g.addColorStop(1,   "rgba(13,8,18,0.98)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, GROUND_Y + 16, VW, apron + 34);
+
+}
+
+/* ---------------------------------------------------------------------------
+   14. RENDERING — world objects
+--------------------------------------------------------------------------- */
+function drawSolids(){
+  for(const s of solids){
+    const sx = s.x - camera.x;
+    if(sx > VW + 30 || sx + s.w < -30) continue;
+
+    if(s.kind === "ground"){
+      px(sx, s.y, s.w, 3, "#b3a898");                  // lit top edge
+      px(sx, s.y + 3, s.w, s.h - 3, "#6d6459");        // concrete body
+      // Cast-in-place seams and stains.
+      for(let i = 0; i < s.w; i += 14) px(sx + i, s.y + 3, 1, s.h - 3, "#5c544a");
+      // Water stains, seeded off world position so they don't crawl each frame.
+      for(let i = 8; i < s.w; i += 37){
+        const seed = (Math.abs(Math.floor(s.x) + i) * 2654435761) % 11;
+        px(sx + i, s.y + 6, 3, 6 + seed, "#5a5249");
+      }
+
+    } else if(s.kind === "slab"){
+      px(sx, s.y, s.w, 2, "#b3a898");
+      px(sx, s.y + 2, s.w, s.h - 2, "#5f584e");
+      px(sx, s.y + s.h - 1, s.w, 1, "#3b352e");
+
+    } else if(s.kind === "crate"){
+      // Toppled plastic milk crate: lattice sides, the classic Aussie one.
+      px(sx, s.y, s.w, s.h, "#2f6b4f");
+      px(sx + 1, s.y + 1, s.w - 2, s.h - 2, "#3d8b64");
+      for(let i = 3; i < s.w - 2; i += 4) px(sx + i, s.y + 3, 2, s.h - 6, "#2f6b4f");
+      px(sx, s.y, s.w, 2, "#57ab7f");
+
+    } else if(s.kind === "bin"){
+      // Council wheelie bin, green body, dark lid, one wheel.
+      px(sx, s.y + 3, s.w, s.h - 3, "#2e6b3a");
+      px(sx + 1, s.y + 4, s.w - 3, s.h - 5, "#3f8c4c");
+      px(sx - 1, s.y, s.w + 2, 4, "#22351f");          // lid
+      px(sx + 2, s.y + 7, s.w - 5, 1, "#2e6b3a");
+      px(sx + 1, s.y + s.h - 2, 3, 2, "#1a1a1a");      // wheel
+    }
+  }
+}
+
+function drawPickups(){
+  for(const p of pickups){
+    const sx = p.x - camera.x;
+    if(sx > VW + 20 || sx < -20) continue;
+    const by = p.y + Math.sin(p.bob) * 1.6;
+
+    if(p.kind === "cassette"){
+      px(sx, by, 9, 7, "#2b2b33");
+      px(sx + 1, by + 1, 7, 3, "#d9cfae");             // label
+      px(sx + 2, by + 4, 2, 2, "#7a7a86");             // spindles
+      px(sx + 5, by + 4, 2, 2, "#7a7a86");
+
+    } else if(p.kind === "lamp"){
+      px(sx + 1, by + 7, 7, 2, "#c98b33");             // base
+      px(sx + 2, by, 5, 7, "#ff8a3d");                 // glass
+      px(sx + 3, by + 1 + (Math.sin(p.bob * 1.7) > 0 ? 0 : 1), 3, 3, "#ffd166");  // blob
+      px(sx + 2, by, 5, 1, "#c98b33");
+
+    } else if(p.kind === "ring"){
+      // Mood ring, cycling through its colours while it waits.
+      const cols = ["#ff4f9e","#4ff2d8","#8a6bff","#f5c542"];
+      const c = cols[Math.floor(p.bob * 2) % cols.length];
+      px(sx + 1, by + 2, 7, 6, "#d9c98a");
+      px(sx + 2, by + 3, 5, 4, "#1a1424");
+      px(sx + 3, by, 3, 3, c);
+      px(sx + 3, by - 1, 3, 1, "rgba(255,255,255,.6)");
+
+    } else if(p.kind === "beer"){
+      // XXXX stubby: gold label, four X's implied by four ticks.
+      px(sx, by, 7, 12, "#6b3f1e");                    // brown glass
+      px(sx + 2, by - 2, 3, 3, "#6b3f1e");             // neck
+      px(sx, by + 3, 7, 6, "#f5c542");                 // label
+      for(let i = 0; i < 4; i++) px(sx + 1 + i * 1.6, by + 5, 1, 2, "#b8271f");
+      px(sx + 5, by, 1, 12, "rgba(255,255,255,.22)"); // highlight
+    }
+  }
+}
+
+function drawEnemies(){
+  for(const e of enemies){
+    const sx = e.x - camera.x;
+    if(sx > VW + 30 || sx + e.w < -30) continue;
+    const legPhase = Math.sin(e.anim) > 0 ? 1 : 0;
+
+    if(e.kind === "redback"){
+      px(sx + 2, e.y + 2, 7, 5, "#141018");           // body
+      px(sx + 4, e.y + 2, 3, 4, "#c8262b");           // red stripe
+      px(sx + 1, e.y + 4, 2, 2, "#141018");           // head
+      for(let i = 0; i < 3; i++){                      // scuttling legs
+        px(sx + 1 + i * 3, e.y + 7 - legPhase, 1, 2, "#141018");
+        px(sx + 2 + i * 3, e.y, 1, 2, "#141018");
+      }
+
+    } else if(e.kind === "huntsman"){
+      if(e.state === "hang"){
+        px(sx + 6, e.y - 14, 1, 14, "rgba(233,229,218,.35)");  // dragline
+      }
+      px(sx + 3, e.y + 2, 8, 5, "#6b5540");
+      px(sx + 1, e.y + 3, 3, 3, "#54412f");
+      for(let i = 0; i < 4; i++){
+        px(sx + i * 3, e.y + 7 - legPhase, 2, 2, "#54412f");
+        px(sx + i * 3, e.y - 1 + legPhase, 2, 2, "#54412f");
+      }
+
+    } else if(e.kind === "teen"){
+      const bounce = Math.sin(e.anim * 1.4) > 0 ? 0 : 1;
+      px(sx + 2, e.y + 1, 6, 5, "#2a2a30");           // hair
+      px(sx + 3, e.y + 4, 5, 4, "#c9976b");           // face
+      px(sx + 1, e.y + 8, 8, 8, "#7a3f8c");           // flanno
+      px(sx + 4, e.y + 8, 2, 8, "#4a2456");
+      px(sx + 1, e.y + 16, 3, 4 - bounce, "#2f3b6b"); // stubbies + legs
+      px(sx + 6, e.y + 16, 3, 4 - (1 - bounce), "#2f3b6b");
+
+    } else if(e.kind === "roo"){
+      const f = e.onGround ? 0 : 3;
+      px(sx + 2, e.y + 6 - f, 10, 9, "#9a6b3f");       // body
+      px(sx + 9, e.y + 1 - f, 5, 6, "#9a6b3f");       // head
+      px(sx + 12, e.y + 3 - f, 3, 2, "#7d5531");      // snout
+      px(sx + 9, e.y - 3 - f, 2, 5, "#7d5531");       // ears
+      px(sx + 12, e.y - 3 - f, 2, 5, "#7d5531");
+      px(sx - 3, e.y + 11 - f, 6, 3, "#7d5531");      // tail
+      px(sx + 3, e.y + 14 - f, 4, 6 + f, "#7d5531");  // hind legs
+      px(sx + 8, e.y + 12 - f, 3, 4, "#9a6b3f");
+      px(sx + 12, e.y + 2 - f, 1, 1, "#150d20");      // eye
+    }
+  }
+}
+
+/** The player: race helmet, hard suit, XXXX-gold visor. */
+function drawPlayer(){
+  // Flash while invulnerable, but never disappear entirely.
+  if(player.invuln > 0 && Math.floor(player.invuln / 4) % 2 === 0) return;
+
+  const sx = player.x - camera.x, sy = player.y, f = player.facing;
+  const duck = player.ducking;
+  const step = Math.sin(player.anim) > 0 ? 1 : 0;
+  const poisoned = player.poison > 0;
+  const suit = poisoned ? "#b9d6a8" : "#e9e5da";
+  const suitDark = poisoned ? "#8fae7f" : "#b9b2a4";
+
+  if(duck){
+    px(sx - 1, sy + 3, 12, 9, suit);                      // hunched body
+    px(sx - 1, sy + 3, 12, 2, "#ff5b2e");                 // racing stripe
+    px(sx + (f > 0 ? 4 : 0), sy - 1, 7, 6, suit);         // helmet
+    px(sx + (f > 0 ? 7 : 0), sy + 1, 4, 3, "#f5c542");    // visor
+    px(sx, sy + 10, 4, 2, suitDark);
+    px(sx + 6, sy + 10, 4, 2, suitDark);
+  } else {
+    // Backpack / life support
+    px(sx + (f > 0 ? -2 : 8), sy + 6, 4, 8, "#8d867a");
+    // Legs
+    px(sx + 1, sy + 14, 3, 6 - step, suitDark);
+    px(sx + 6, sy + 14, 3, 5 + step, suitDark);
+    px(sx + 1, sy + 19 - step, 4, 2, "#33302b");          // boots
+    px(sx + 6, sy + 18 + step, 4, 2, "#33302b");
+    // Torso with racing stripe and chest control box
+    px(sx, sy + 6, 10, 9, suit);
+    px(sx, sy + 8, 10, 2, "#ff5b2e");
+    px(sx + (f > 0 ? 5 : 2), sy + 11, 3, 3, "#4ff2d8");
+    // Helmet + visor
+    px(sx, sy, 10, 7, suit);
+    px(sx + (f > 0 ? 4 : 1), sy + 2, 5, 3, "#f5c542");
+    px(sx + (f > 0 ? 7 : 1), sy + 2, 1, 1, "#fff6d6");    // visor glint
+    px(sx, sy, 10, 1, "#fdfbf6");
+  }
+
+  // Thruster flare on the way up.
+  if(player.thrust > 0 && player.vy < 0){
+    const t = player.thrust;
+    px(sx + 3, sy + (duck ? 12 : 20), 4, 2 + t / 4, t > 6 ? "#4ff2d8" : "#ff5b2e");
+  }
+}
+
+function drawParticles(){
+  for(const d of dust){
+    px(d.x - camera.x, d.y, 2, 2, d.col);
+  }
+  ctx.textAlign = "center";
+  ctx.font = "8px " + '"Courier New", monospace';
+  for(const p of popups){
+    ctx.globalAlpha = clamp(p.life / 26, 0, 1);
+    ctx.fillStyle = "#000";
+    ctx.fillText(p.text, p.x - camera.x + 5, p.y + 1);
+    ctx.fillStyle = p.col;
+    ctx.fillText(p.text, p.x - camera.x + 4, p.y);
+    ctx.globalAlpha = 1;
+  }
+}
+
+/** Green venom tint at the edges while the spider bite is active. */
+function drawPoisonVignette(){
+  if(player.poison <= 0) return;
+  const a = clamp(player.poison / 220, 0, 1) * 0.3;
+  const r = Math.max(VW, VH) * 0.62;
+  const g = ctx.createRadialGradient(VW/2, VH/2, r * 0.25, VW/2, VH/2, r);
+  g.addColorStop(0, "rgba(90,180,90,0)");
+  g.addColorStop(1, "rgba(90,180,90," + a.toFixed(3) + ")");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VW, VH);
+}
+
+/* ---------------------------------------------------------------------------
+   15. GAME LOOP — fixed 60Hz physics with an accumulator, variable-rate draw.
+   Physics stays deterministic regardless of the display's refresh rate.
+--------------------------------------------------------------------------- */
+const STEP = 1000 / 60;
+let acc = 0, last = performance.now();
+
+function tick(now){
+  requestAnimationFrame(tick);
+  let dt = now - last; last = now;
+  if(dt > 250) dt = 250;                 // don't spiral after a tab switch
+  acc += dt;
+
+  while(acc >= STEP){
+    acc -= STEP;
+    if(game.state === "play"){
+      game.time++;
+      updatePlayer();
+      updateEnemies();
+      updatePickups();
+      // Camera trails the player and never scrolls backwards — this is a run.
+      // Sit the player about a third in, so a wider viewport shows more ahead.
+      const target = player.x - VW * 0.32;
+      camera.x = Math.max(camera.x, target);
+      streamWorld();
+      if(game.time % 30 === 0) cullWorld();
+      
+      // Random bleeps from the sci-fi soundscape
+      if(Math.random() < 0.01) Bgm.blip();
+    }
+    
+    // Always update particles and shake regardless of paused/info state
+    if(game.state === "play" || game.state === "info" || game.state === "over"){
+      updateParticles();
+      if(game.shake > 0) game.shake--;
+    }
+  }
+
+  render();
+}
+
+function render(){
+  ctx.save();
+  if(game.shake > 0){
+    ctx.translate(rndi(-game.shake, game.shake) * .5, rndi(-game.shake, game.shake) * .5);
+  }
+  // World layer: shifted by camera.y so the ground plane always sits on the
+  // bottom edge, whatever the viewport height. Horizontal offsets stay
+  // per-object because each parallax layer scrolls at its own rate.
+  ctx.save();
+  ctx.translate(0, -camera.y);
+  drawParallax();
+  drawSolids();
+  drawPickups();
+  drawEnemies();
+  if(game.state === "play" || game.state === "over" || game.state === "info") drawPlayer();
+  drawParticles();
+  drawForeground();
+  ctx.restore();
+
+  drawPoisonVignette();          // screen space
+  ctx.restore();
+  updateHud();
+}
+
+/* ---------------------------------------------------------------------------
+   16. HUD + SCREENS
+--------------------------------------------------------------------------- */
+const el = id => document.getElementById(id);
+const hScore = el("hScore"), hDist = el("hDist");
+const integrityBox = el("integrity"), integrityFill = el("integrityFill");
+const startScreen = el("startScreen"), overScreen = el("overScreen"), infoScreen = el("infoScreen");
+const hud = el("hud");
+
+function updateHud(){
+  hScore.textContent = game.score;
+  hDist.textContent = game.distance + "m";
+  integrityFill.style.width = player.integrity + "%";
+  integrityBox.classList.toggle("low", player.integrity <= 30);
+  hud.style.opacity = (game.state === "play" || game.state === "info") ? "1" : "0";
+}
+
+function resetWorld(){
+  solids = []; pickups = []; enemies = []; props = []; popups = []; dust = [];
+  game.score = 0; game.items = 0; game.distance = 0; game.difficulty = 1;
+  game.spawnX = 0; game.shake = 0;
+  camera.x = 0;
+  Object.assign(player, {
+    x:60, y:GROUND_Y - STAND_H, w:PLAYER_W, h:STAND_H,
+    vx:0, vy:0, onGround:false, ducking:false, facing:1,
+    integrity:100, invuln:0, poison:0, coyote:0, buffer:0, anim:0, thrust:0
+  });
+  addGround(-60, 320);          // safe launch pad before the generator kicks in
+  game.spawnX = 260;
+  streamWorld();
+}
+
+function showMenu(){
+  game.state = "menu";
+  overScreen.classList.remove("on");
+  infoScreen.classList.remove("on");
+  startScreen.classList.add("on");
+  touchLayer.classList.remove("on");
+  el("infoBtn").style.display = "none";
+  el("endBtn").style.display = "none";
+  resetWorld();
+  loadLeaderboard();
+  Bgm.stop();
+}
+
+function startGame(){
+  Sfx.init(); Sfx.resume();
+  Bgm.start();
+  resetWorld();
+  game.state = "play";
+  startScreen.classList.remove("on");
+  overScreen.classList.remove("on");
+  infoScreen.classList.remove("on");
+  if(isTouch) touchLayer.classList.add("on");
+  
+  el("infoBtn").style.display = "inline-block";
+  el("infoBtn").textContent = "Info";
+  el("endBtn").style.display = "inline-block";
+
+  el("overStatus").textContent = "";
+  el("overStatus").className = "status";
+  el("entryForm").style.display = LEADERBOARD_READY ? "flex" : "none";
+}
+
+function endRun(){
+  if(game.state !== "play" && game.state !== "info") return;
+  game.state = "over";
+  Sfx.dead();
+  Bgm.stop();
+  touchLayer.classList.remove("on");
+  input.left = input.right = input.jump = input.down = false;
+  el("infoScreen").classList.remove("on");
+  
+  el("infoBtn").style.display = "none";
+  el("endBtn").style.display = "none";
+  
+  el("oScore").textContent = game.score;
+  el("oDist").textContent  = game.distance + "m";
+  el("oItems").textContent = game.items;
+  const status = el("overStatus");
+  if(!LEADERBOARD_READY){
+    status.textContent = "Leaderboard not connected — add your Apps Script URL";
+    status.className = "status warn";
+  }
+  overScreen.classList.add("on");
+}
+
+el("playBtn").addEventListener("click", startGame);
+el("againBtn").addEventListener("click", showMenu);
+el("endBtn").addEventListener("click", () => {
+  if(game.state === "play" || game.state === "info") endRun();
+});
+el("infoBtn").addEventListener("click", () => {
+  if(game.state === "play"){
+    game.state = "info";
+    infoScreen.classList.add("on");
+    el("infoBtn").textContent = "Resume";
+  } else if(game.state === "info"){
+    game.state = "play";
+    infoScreen.classList.remove("on");
+    el("infoBtn").textContent = "Info";
+    Sfx.resume();
+    if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+  }
+});
+el("resumeBtn").addEventListener("click", () => {
+  if(game.state === "info"){
+    game.state = "play";
+    infoScreen.classList.remove("on");
+    el("infoBtn").textContent = "Info";
+    Sfx.resume();
+    if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+  }
+});
+
+el("muteBtn").addEventListener("click", () => {
+  Sfx.muted = !Sfx.muted;
+  el("muteBtn").textContent = "Snd: " + (Sfx.muted ? "off" : "on");
+});
+
+el("musicBtn").addEventListener("click", () => {
+  Bgm.toggle();
+  el("musicBtn").textContent = "Mus: " + (Bgm.muted ? "off" : "on");
+});
+
+/* ---------------------------------------------------------------------------
+   17. LEADERBOARD (Google Apps Script)
+--------------------------------------------------------------------------- */
+const marqueeTrack = el("marqueeTrack");
+
+function stopMarquee(){
+  if(marqueeTrack.getAnimations) marqueeTrack.getAnimations().forEach(a => a.cancel());
+}
+
+function renderMarquee(rows){
+  stopMarquee();
+  if(!rows || !rows.length){
+    marqueeTrack.className = "track idle";
+    marqueeTrack.textContent = "No scores posted yet — be the first";
+    return;
+  }
+  const line = rows.slice(0, 10).map((r, i) =>
+    `<em>${i + 1}.</em> ${escapeHtml(r.name || "?")} from ${escapeHtml(r.suburb || "?")} · ${Number(r.score) || 0}`
+  ).join("   ·   ");
+  marqueeTrack.className = "track";
+  marqueeTrack.innerHTML = line + "   ·   " + line;   // doubled for a seamless loop
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  // Animate by width so long lists scroll at a readable, constant speed.
+  const w = marqueeTrack.scrollWidth / 2;
+  marqueeTrack.animate(
+    [{ transform:"translateX(0)" }, { transform:`translateX(${-w}px)` }],
+    { duration:w * 40, iterations:Infinity, easing:"linear" }
+  );
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+}
+
+async function loadLeaderboard(){
+  stopMarquee();
+  if(!LEADERBOARD_READY){
+    marqueeTrack.className = "track idle";
+    marqueeTrack.textContent = "Leaderboard not connected";
+    return;
+  }
+  marqueeTrack.className = "track idle";
+  marqueeTrack.textContent = "Loading high scores…";
+  try{
+    const res = await fetch(LEADERBOARD_URL + "?action=top&limit=10", { method:"GET" });
+    const data = await res.json();
+    renderMarquee(Array.isArray(data) ? data : (data.scores || []));
+  }catch(err){
+    marqueeTrack.className = "track idle";
+    marqueeTrack.textContent = "Leaderboard unreachable";
+  }
+}
+
+el("submitBtn").addEventListener("click", async () => {
+  const status = el("overStatus");
+  const name   = el("fName").value.trim();
+  const suburb = el("fSuburb").value.trim();
+
+  if(!LEADERBOARD_READY){
+    status.textContent = "Leaderboard not connected — add your Apps Script URL";
+    status.className = "status warn";
+    return;
+  }
+  if(!name || !suburb){
+    status.textContent = "Need a first name and a suburb";
+    status.className = "status warn";
+    return;
+  }
+
+  status.textContent = "Posting…";
+  status.className = "status";
+  try{
+    // text/plain keeps this a "simple request" so the browser skips the CORS
+    // preflight, which an Apps Script web app can't respond to.
+    await fetch(LEADERBOARD_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body:JSON.stringify({
+        name, suburb,
+        score:game.score,
+        distance:game.distance,
+        items:game.items,
+        ts:new Date().toISOString()
+      })
+    });
+    status.textContent = "Posted — " + name + " from " + suburb;
+    status.className = "status ok";
+    el("submitBtn").disabled = true;
+    loadLeaderboard();
+  }catch(err){
+    status.textContent = "Couldn't reach the leaderboard";
+    status.className = "status warn";
+  }
+});
+
+// Enter moves through the two fields and then posts.
+el("fName").addEventListener("keydown", e => { if(e.key === "Enter") el("fSuburb").focus(); });
+el("fSuburb").addEventListener("keydown", e => { if(e.key === "Enter") el("submitBtn").click(); });
+
+/* ---------------------------------------------------------------------------
+   18. BOOT
+--------------------------------------------------------------------------- */
+el("entryForm").style.display = LEADERBOARD_READY ? "flex" : "none";
+fitCanvas();
+showMenu();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
