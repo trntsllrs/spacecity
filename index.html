@@ -7,7 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#150d20">
 <title>SPACE CITY</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M4 28 C4 8 28 8 28 28 Z' fill='%236d6459' stroke='%234ff2d8' stroke-width='2'/><path d='M2 30 L30 30' stroke='%23f5c542' stroke-width='2'/></svg>">
+<!-- Updated Favicon: Just the gray semi-circle -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M4 28 C4 8 28 8 28 28 Z' fill='%236d6459'/></svg>">
 <style>
 /* ============================================================================
    SPACE CITY — 1979 / alternate timeline
@@ -130,8 +131,35 @@ canvas#game.ring{animation:chroma 900ms ease-out 1;}
 .screen.on{display:flex;}
 
 /* The signature: a Binishell dome arch holding the signage. Grunge updated. */
+.dome-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+.dome-bg {
+  position: absolute;
+  bottom: 0;
+  border-radius: 50% 50% 0 0 / 62% 62% 0 0;
+  background: linear-gradient(180deg, rgba(154,144,131,.20), rgba(154,144,131,.03) 70%);
+  border: 2px solid #3b352e;
+  border-bottom: none;
+  z-index: 0;
+}
+.dome-bg-left {
+  width: 180px; height: 110px;
+  left: -40px;
+  opacity: 0.6;
+}
+.dome-bg-right {
+  width: 140px; height: 80px;
+  right: -25px;
+  opacity: 0.4;
+}
 .dome{
   position:relative;
+  z-index: 1;
   width:min(78vw,300px);
   border:2px solid #50483e;
   border-bottom:none;
@@ -356,10 +384,14 @@ body.portrait #bJump{
 
   <!-- ================= START SCREEN ================= -->
   <div class="screen on" id="startScreen">
-    <div class="dome">
-      <p class="eyebrow">Anzac Ave · Kallangur</p>
-      <h1>Space<br>City</h1>
-      <p class="sub">THE DOMES RETURN</p>
+    <div class="dome-wrap">
+      <div class="dome-bg dome-bg-left"></div>
+      <div class="dome-bg dome-bg-right"></div>
+      <div class="dome">
+        <p class="eyebrow">Anzac Ave · Kallangur</p>
+        <h1>Space<br>City</h1>
+        <p class="sub">THE DOMES RETURN</p>
+      </div>
     </div>
     <p class="plaque">
       It's 1979, you drove straight off the track at Whiteside and ended up in the Binishells of Space City, Kallangur. Collect the nostalgia, avoid the wild, see how long you can last.
@@ -369,7 +401,7 @@ body.portrait #bJump{
       <div class="track idle" id="marqueeTrack">Loading high scores…</div>
     </div>
 
-    <button class="btn" id="playBtn" type="button">Enter the domes</button>
+    <button class="btn" id="playBtn" type="button">ENTER</button>
     <p class="hint" id="controlHint">← → move · ↑ jump · ↓ duck &amp; slide</p>
   </div>
 
@@ -386,7 +418,8 @@ body.portrait #bJump{
        
        <p><strong style="color:var(--racing)">AVOID:</strong><br>
        🕷️ <b style="color:var(--concrete)">Spiders</b> (Venom slows you down!)<br>
-       🦘 <b style="color:var(--concrete)">Roos & Teens</b> (Heavy suit damage)</p>
+       🦘 <b style="color:var(--concrete)">Roos</b> (Stomp 'em or take heavy damage!)<br>
+       🛹 <b style="color:var(--concrete)">Teens</b> (Avoid them entirely!)</p>
        
        <p><strong style="color:var(--gold)">MOVEMENT:</strong><br>
        Tap ▲ to hop, hold to float higher.<br>
@@ -406,9 +439,9 @@ body.portrait #bJump{
       <div><span class="k">Artifacts</span><span class="v" id="oItems">0</span></div>
     </div>
 
+    <!-- Removed suburb input field here -->
     <div class="entry" id="entryForm">
-      <input id="fName" type="text" maxlength="14" placeholder="First name" autocomplete="given-name" enterkeyhint="next">
-      <input id="fSuburb" type="text" maxlength="18" placeholder="Suburb" autocomplete="address-level2" enterkeyhint="done">
+      <input id="fName" type="text" maxlength="14" placeholder="First name" autocomplete="given-name" enterkeyhint="done">
       <button class="btn" id="submitBtn" type="button">Post score</button>
     </div>
 
@@ -448,10 +481,10 @@ body.portrait #bJump{
 
    POST payload this game sends (as text/plain, which avoids a CORS preflight
    that Apps Script can't answer):
-       { name:"Trent", suburb:"Kallangur", score:340, distance:812, items:29 }
+       { name:"Trent", score:340, distance:812, items:29 }
 
    GET this game expects (append ?action=top&limit=10):
-       [ {name:"Trent", suburb:"Kallangur", score:340}, ... ]  sorted desc
+       [ {name:"Trent", score:340}, ... ]  sorted desc
    or  { scores:[ ... ] }  — both shapes are handled.
 
    While the URL is left as the placeholder below, the game runs completely
@@ -604,7 +637,9 @@ const Bgm = {
       try {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         this.gain = this.ctx.createGain();
-        this.gain.gain.value = this.muted ? 0 : 0.12;
+        
+        // Dropped volume for less intensity
+        this.gain.gain.value = this.muted ? 0 : 0.06;
         this.gain.connect(this.ctx.destination);
 
         // Lowpass filter for the drone
@@ -622,14 +657,14 @@ const Bgm = {
         this.lfo.connect(lfoGain);
         lfoGain.connect(this.filter.frequency);
 
-        // Drone synths
+        // Drone synths: Switched to sine and triangle for a softer, retro 50s sci-fi aesthetic
         this.osc1 = this.ctx.createOscillator();
-        this.osc1.type = "sawtooth";
-        this.osc1.frequency.value = 65.41; // C2
+        this.osc1.type = "sine";
+        this.osc1.frequency.value = 130.81; // C3
 
         this.osc2 = this.ctx.createOscillator();
-        this.osc2.type = "square";
-        this.osc2.frequency.value = 65.41 * 1.503; // ~G2 (detuned perfect fifth)
+        this.osc2.type = "triangle";
+        this.osc2.frequency.value = 130.81 * 1.5; // ~G3 (perfect fifth)
 
         this.osc1.connect(this.filter);
         this.osc2.connect(this.filter);
@@ -646,7 +681,7 @@ const Bgm = {
     if(this.gain) {
       this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
       this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
-      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.12, this.ctx.currentTime + 1);
+      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.06, this.ctx.currentTime + 1);
     }
   },
   stop() {
@@ -661,7 +696,7 @@ const Bgm = {
     if(this.ctx && this.gain) {
       this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
       this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
-      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.12, this.ctx.currentTime + 0.3);
+      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.06, this.ctx.currentTime + 0.3);
     }
   },
   blip() {
@@ -1003,10 +1038,19 @@ function moveX(body, dx){
   let blocker = null;
   for(const s of nearbySolids(body)){
     if(!hit(body, s)) continue;
-    if(dx > 0) body.x = s.x - body.w;
-    else if(dx < 0) body.x = s.x + s.w;
-    body.vx = 0;
-    blocker = s;
+    
+    // Crates can be pushed horizontally if bumped by player
+    if(s.kind === "crate" && body === player) {
+      s.x += dx * 0.7;               // Yield to the player
+      if(dx > 0) body.x = s.x - body.w;
+      else if(dx < 0) body.x = s.x + s.w;
+      body.vx *= 0.6;                // Player slows down heavily to give crate "weight"
+    } else {
+      if(dx > 0) body.x = s.x - body.w;
+      else if(dx < 0) body.x = s.x + s.w;
+      body.vx = 0;
+      blocker = s;
+    }
   }
   return blocker;
 }
@@ -1159,7 +1203,8 @@ function groundAhead(e, dir){
 }
 
 function updateEnemies(){
-  for(const e of enemies){
+  for(let i = enemies.length - 1; i >= 0; i--){
+    const e = enemies[i];
     e.anim += 0.14;
 
     if(e.kind === "redback"){
@@ -1221,12 +1266,23 @@ function updateEnemies(){
 
     // --- contact with the player -----------------------------------------
     if(hit(player, e) && player.invuln === 0){
+      
+      // STOMP MECHANIC: Kangaroos can be destroyed by jumping on them
+      if(e.kind === "roo" && player.vy > 0 && player.y + player.h - player.vy <= e.y + 16){
+         player.vy = -4.5;
+         addPopup(e.x, e.y, "STOMPED", "#ff4f9e");
+         Sfx.jump();
+         enemies.splice(i, 1);
+         continue; // skip the damage checks since the enemy is dead
+      }
+      
+      // Damage calculations based on enemy type
       if(e.kind === "redback" || e.kind === "huntsman"){
-        damage(e.kind === "huntsman" ? 16 : 12, 220);   // venom = slowed for ~3.6s
+        damage(e.kind === "huntsman" ? 8 : 5, 220);   // Spiders deal smaller hit to suit life
       } else if(e.kind === "teen"){
         damage(11, 0);
       } else {
-        damage(18, 0);
+        damage(35, 0);                                // Kangaroos deal very violent hit to suit life
       }
     }
   }
@@ -1413,11 +1469,11 @@ function drawSolids(){
       px(sx, s.y + s.h - 1, s.w, 1, "#3b352e");
 
     } else if(s.kind === "crate"){
-      // Toppled plastic milk crate: lattice sides, the classic Aussie one.
-      px(sx, s.y, s.w, s.h, "#2f6b4f");
-      px(sx + 1, s.y + 1, s.w - 2, s.h - 2, "#3d8b64");
-      for(let i = 3; i < s.w - 2; i += 4) px(sx + i, s.y + 3, 2, s.h - 6, "#2f6b4f");
-      px(sx, s.y, s.w, 2, "#57ab7f");
+      // Toppled plastic milk crate: updated to solid black
+      px(sx, s.y, s.w, s.h, "#151515");
+      px(sx + 1, s.y + 1, s.w - 2, s.h - 2, "#222");
+      for(let i = 3; i < s.w - 2; i += 4) px(sx + i, s.y + 3, 2, s.h - 6, "#151515");
+      px(sx, s.y, s.w, 2, "#333");
 
     } else if(s.kind === "bin"){
       // Council wheelie bin, green body, dark lid, one wheel.
@@ -1798,7 +1854,7 @@ function renderMarquee(rows){
     return;
   }
   const line = rows.slice(0, 10).map((r, i) =>
-    `<em>${i + 1}.</em> ${escapeHtml(r.name || "?")} from ${escapeHtml(r.suburb || "?")} · ${Number(r.score) || 0}`
+    `<em>${i + 1}.</em> ${escapeHtml(r.name || "?")} · ${Number(r.score) || 0}`
   ).join("   ·   ");
   marqueeTrack.className = "track";
   marqueeTrack.innerHTML = line + "   ·   " + line;   // doubled for a seamless loop
@@ -1838,15 +1894,14 @@ async function loadLeaderboard(){
 el("submitBtn").addEventListener("click", async () => {
   const status = el("overStatus");
   const name   = el("fName").value.trim();
-  const suburb = el("fSuburb").value.trim();
 
   if(!LEADERBOARD_READY){
     status.textContent = "Leaderboard not connected — add your Apps Script URL";
     status.className = "status warn";
     return;
   }
-  if(!name || !suburb){
-    status.textContent = "Need a first name and a suburb";
+  if(!name){
+    status.textContent = "Need a first name";
     status.className = "status warn";
     return;
   }
@@ -1860,14 +1915,14 @@ el("submitBtn").addEventListener("click", async () => {
       method:"POST",
       headers:{ "Content-Type":"text/plain;charset=utf-8" },
       body:JSON.stringify({
-        name, suburb,
+        name,
         score:game.score,
         distance:game.distance,
         items:game.items,
         ts:new Date().toISOString()
       })
     });
-    status.textContent = "Posted — " + name + " from " + suburb;
+    status.textContent = "Posted — " + name;
     status.className = "status ok";
     el("submitBtn").disabled = true;
     loadLeaderboard();
@@ -1878,8 +1933,7 @@ el("submitBtn").addEventListener("click", async () => {
 });
 
 // Enter moves through the two fields and then posts.
-el("fName").addEventListener("keydown", e => { if(e.key === "Enter") el("fSuburb").focus(); });
-el("fSuburb").addEventListener("keydown", e => { if(e.key === "Enter") el("submitBtn").click(); });
+el("fName").addEventListener("keydown", e => { if(e.key === "Enter") el("submitBtn").click(); });
 
 /* ---------------------------------------------------------------------------
    18. BOOT
