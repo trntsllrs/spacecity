@@ -11,6 +11,7 @@
 <style>
 /* ============================================================================
    SPACE CITY — 1979 / alternate timeline
+   © 2026 Trent Sellars
    Palette is pulled straight out of the subject: wet concrete, a Moreton Bay
    dusk going orange-to-violet, dying neon, and XXXX gold.
    ========================================================================== */
@@ -108,7 +109,7 @@ canvas#game.ring{animation:chroma 900ms ease-out 1;}
   top:calc(8px + env(safe-area-inset-top));
   right:calc(10px + env(safe-area-inset-right));
   flex-wrap: wrap; justify-content: flex-end;
-  max-width: 60vw;
+  max-width: 62vw;
 }
 #sysBar button{
   font-family:var(--mono);font-size:9px;letter-spacing:.14em;
@@ -117,6 +118,8 @@ canvas#game.ring{animation:chroma 900ms ease-out 1;}
   padding:5px 7px;cursor:pointer;text-transform:uppercase;
 }
 #sysBar button:hover{border-color:var(--neon-cyan);color:var(--neon-cyan);}
+#sysBar button#endBtn{border-color:rgba(255,91,46,.55);color:#ffb9a4;}
+#sysBar button#endBtn:hover{border-color:var(--racing);color:var(--racing);}
 
 /* ---- screens (start / game over) ---------------------------------------- */
 .screen{
@@ -128,6 +131,7 @@ canvas#game.ring{animation:chroma 900ms ease-out 1;}
   line-height:1.4;
 }
 .screen.on{display:flex;}
+#infoScreen{z-index:24;justify-content:flex-start;padding-top:calc(46px + env(safe-area-inset-top));}
 
 /* The signature: a Binishell dome arch holding the signage. Grunge updated. */
 .dome-wrap {
@@ -215,6 +219,10 @@ h1{
   font-size:10px;line-height:1.65;color:#bbaea1;letter-spacing:.02em;
 }
 .plaque b{color:var(--gold);font-weight:400;}
+.copyright{
+  margin:14px 0 0;font-size:8px;letter-spacing:.22em;
+  color:#6d6459;text-transform:uppercase;
+}
 
 /* marquee — the old shopping-centre sign, now running high scores */
 .marquee{
@@ -261,6 +269,29 @@ h1{
   transform: none;
 }
 .hint{margin-top:12px;font-size:9px;letter-spacing:.14em;color:var(--concrete);text-transform:uppercase;}
+
+/* ---- info screen legend ------------------------------------------------- */
+.legend{
+  text-align:left;width:min(92vw,360px);margin:14px auto 0;
+  font-size:11px;line-height:1.5;
+}
+.legend h2{
+  font-family:var(--mono);font-size:9px;letter-spacing:.24em;
+  text-transform:uppercase;margin:14px 0 6px;font-weight:400;
+}
+.legend h2.get{color:var(--neon-cyan);}
+.legend h2.avoid{color:var(--racing);}
+.legend h2.move{color:var(--gold);}
+.legend ul{list-style:none;margin:0;padding:0;}
+.legend li{
+  display:flex;gap:9px;align-items:baseline;
+  padding:4px 0;border-bottom:1px solid rgba(154,144,131,.14);
+}
+.legend .ico{font-size:15px;line-height:1;width:22px;flex:0 0 22px;text-align:center;}
+.legend b{color:var(--suit);font-weight:400;}
+.legend span.d{color:#9a9083;}
+.legend .pts{color:var(--gold);}
+.legend .bad{color:var(--racing);}
 
 /* game over entry form */
 .tally{display:flex;gap:20px;justify-content:center;margin:6px 0 12px;}
@@ -418,29 +449,41 @@ body.portrait #bJump{
 
     <button class="btn" id="playBtn" type="button">ENTER</button>
     <p class="hint" id="controlHint">← → move · ↑ jump · ↓ duck &amp; slide</p>
+    <p class="copyright">© 2026 Trent Sellars</p>
   </div>
 
   <!-- ================= INFO SCREEN ================= -->
   <div class="screen" id="infoScreen">
     <p class="eyebrow">Survival Guide</p>
-    <h1 style="font-size:clamp(30px,9vw,46px); color:var(--neon-cyan)">How to survive</h1>
-    <div style="text-align:left; font-size:12px; margin:20px 0; line-height:1.7; color:var(--suit); max-width: 320px; text-shadow:0 1px 2px #000;">
-       <p><strong style="color:var(--neon-cyan)">COLLECT:</strong><br>
-       📼 <b style="color:var(--concrete)">Cassettes</b> (+5)<br>
-       🌋 <b style="color:var(--concrete)">Lava Lamps</b> (+10)<br>
-       💍 <b style="color:var(--concrete)">Mood Rings</b> (Ghost Speed for 10s!)<br>
-       🍺 <b style="color:var(--concrete)">XXXX Gold</b> (+25% Suit Integrity)</p>
-       
-       <p><strong style="color:var(--racing)">AVOID & STOMP:</strong><br>
-       🕷️ <b style="color:var(--concrete)">Spiders</b> (Venom slows you. Stomp for +15 pts)<br>
-       🦘 <b style="color:var(--concrete)">Roos</b> (Stomp 'em or take heavy 35% damage!)<br>
-       🛹 <b style="color:var(--concrete)">Teens</b> (Instant Game Over - Avoid entirely!)</p>
-       
-       <p><strong style="color:var(--gold)">MOVEMENT:</strong><br>
-       Tap ▲ to hop, hold to float higher.<br>
-       Hold ▼ while running to slide under low gaps.</p>
+    <h1 style="font-size:clamp(26px,8vw,40px); color:var(--neon-cyan)">How to<br>survive</h1>
+
+    <div class="legend">
+      <h2 class="get">Collect</h2>
+      <ul>
+        <li><span class="ico">📼</span><span><b>Cassettes</b> <span class="pts">+5</span> <span class="d">— mixtapes off the milk bar rack.</span></span></li>
+        <li><span class="ico">🌋</span><span><b>Lava lamps</b> <span class="pts">+10</span> <span class="d">— still warm from the milk bar window.</span></span></li>
+        <li><span class="ico">💍</span><span><b>Mood rings</b> <span class="pts">+25</span> <span class="d">— rare. 10 seconds of ghost speed, nothing can touch you.</span></span></li>
+        <li><span class="ico">🍺</span><span><b>XXXX Gold</b> <span class="pts">+25% suit</span> <span class="d">— scarce. The only thing that patches the integrity meter.</span></span></li>
+      </ul>
+
+      <h2 class="avoid">Avoid &amp; stomp</h2>
+      <ul>
+        <li><span class="ico">🕷️</span><span><b>Redbacks &amp; huntsmen</b> <span class="d">— venom slows you right down. Land on top for</span> <span class="pts">+15</span>.</span></li>
+        <li><span class="ico">🦘</span><span><b>Roos</b> <span class="d">— stomp 'em, or wear</span> <span class="bad">35% damage</span>.</span></li>
+        <li><span class="ico">🐨</span><span><b>Drop bears</b> <span class="bad">— instant game over</span>. <span class="d">Do not touch. Do not stomp. Just don't.</span></span></li>
+        <li><span class="ico">🕳️</span><span><b>Pits</b> <span class="bad">— 30% damage</span> <span class="d">if you go down one.</span></span></li>
+      </ul>
+
+      <h2 class="move">Movement</h2>
+      <ul>
+        <li><span class="ico">▲</span><span><b>Hop</b> <span class="d">— tap to hop, hold to float higher.</span></span></li>
+        <li><span class="ico">▼</span><span><b>Slide</b> <span class="d">— hold while running to duck under low gaps.</span></span></li>
+        <li><span class="ico">◄►</span><span><b>Move</b> <span class="d">— shove milk crates around to build a step up.</span></span></li>
+      </ul>
     </div>
+
     <button class="btn ghost" id="resumeBtn" type="button">Resume</button>
+    <p class="copyright">© 2026 Trent Sellars · Space City, Kallangur</p>
   </div>
 
   <!-- ================= GAME OVER SCREEN ================= -->
@@ -454,7 +497,6 @@ body.portrait #bJump{
       <div><span class="k">Artifacts</span><span class="v" id="oItems">0</span></div>
     </div>
 
-    <!-- Removed suburb input field here -->
     <div class="entry" id="entryForm">
       <input id="fName" type="text" maxlength="14" placeholder="First name" autocomplete="given-name" enterkeyhint="done">
       <button class="btn" id="submitBtn" type="button">Post score</button>
@@ -462,12 +504,13 @@ body.portrait #bJump{
 
     <p class="status" id="overStatus"></p>
     <button class="btn ghost" id="againBtn" type="button">Run it again</button>
+    <p class="copyright">© 2026 Trent Sellars</p>
   </div>
 </div>
 
 <div id="sysBar">
-  <button id="infoBtn" type="button" style="display:none;">Info</button>
-  <button id="endBtn" type="button" style="display:none;">End Game</button>
+  <button id="infoBtn" type="button">Info</button>
+  <button id="endBtn" type="button" style="display:none;">End &amp; post</button>
   <button id="muteBtn" type="button">Snd: on</button>
   <button id="musicBtn" type="button">Mus: on</button>
 </div>
@@ -483,7 +526,7 @@ body.portrait #bJump{
 <script>
 "use strict";
 /* ============================================================================
-   SPACE CITY
+   SPACE CITY  ·  © 2026 Trent Sellars
    Single-file HTML5 canvas platformer. No external assets, no dependencies.
    Everything below is drawn with fillRect / paths at a 480x270 logical
    resolution, then scaled up with image-rendering: pixelated.
@@ -514,7 +557,7 @@ function fitCanvas(){
   if(portrait){
     deckH = clamp(Math.round(vh * 0.35), 180, 280); // Taller deck for bigger mobile buttons
     // Zoomed in closer on mobile
-    const targetW = clamp(Math.round(vw / 1.3), 260, 420); 
+    const targetW = clamp(Math.round(vw / 1.3), 260, 420);
     viewScale = Math.max(vw / targetW, 1.0);
     VW = clamp(Math.round(vw / viewScale), 260, 820);
     VH = clamp(Math.round((vh - deckH) / viewScale), 250, 600);
@@ -578,7 +621,7 @@ function hit(a, b){ return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h
 function px(x, y, w, h, col){ ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
 
 /* ---------------------------------------------------------------------------
-   4. AUDIO
+   4. AUDIO — one-shot sound effects
 --------------------------------------------------------------------------- */
 const Sfx = {
   ac:null, muted:false,
@@ -606,76 +649,163 @@ const Sfx = {
   dead()  { this.tone("sawtooth",380, 45,  .95, .07); }
 };
 
+/* ---------------------------------------------------------------------------
+   4b. AMBIENT SCORE
+   A slow four-voice pad drifting between chords, run through a soft lowpass
+   with a very slow filter sweep and a long feedback delay, plus a bed of
+   filtered noise for "room". Calm, wide, no percussion — closer to a 70s
+   sci-fi soundtrack than an arcade loop.
+--------------------------------------------------------------------------- */
 const Bgm = {
-  ctx: null, osc1: null, osc2: null, filter: null, lfo: null, gain: null, muted: false,
-  init() {
-    if(!this.ctx) {
-      try {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.gain = this.ctx.createGain();
-        this.gain.gain.value = this.muted ? 0 : 0.05; // Softer volume
-        this.gain.connect(this.ctx.destination);
-        this.filter = this.ctx.createBiquadFilter();
-        this.filter.type = "lowpass";
-        this.filter.frequency.value = 350;
-        this.filter.connect(this.gain);
-        this.lfo = this.ctx.createOscillator();
-        this.lfo.type = "sine";
-        this.lfo.frequency.value = 0.15;
-        const lfoGain = this.ctx.createGain();
-        lfoGain.gain.value = 200;
-        this.lfo.connect(lfoGain);
-        lfoGain.connect(this.filter.frequency);
-        // Sci-fi theremin vibe
-        this.osc1 = this.ctx.createOscillator();
-        this.osc1.type = "sine";
-        this.osc1.frequency.value = 130.81; 
-        this.osc2 = this.ctx.createOscillator();
-        this.osc2.type = "triangle";
-        this.osc2.frequency.value = 130.81 * 1.5; 
-        this.osc1.connect(this.filter);
-        this.osc2.connect(this.filter);
-        this.osc1.start();
-        this.osc2.start();
-        this.lfo.start();
-      } catch(e){}
-    }
+  ctx:null, master:null, padGain:null, filter:null, lfo:null,
+  voices:[], noiseGain:null, delay:null, wet:null,
+  muted:false, level:0.075, timer:null, step:0, started:false,
+
+  // Am7 · Fmaj7 · Cmaj9 · G6 — low, open, nothing urgent about it.
+  CHORDS:[
+    [110.00, 130.81, 164.81, 196.00],
+    [ 87.31, 130.81, 174.61, 220.00],
+    [ 98.00, 130.81, 164.81, 246.94],
+    [ 98.00, 123.47, 146.83, 196.00]
+  ],
+  SCALE:[261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25],
+
+  init(){
+    if(this.ctx) return;
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ac = this.ctx = new AC();
+
+      this.master = ac.createGain();
+      this.master.gain.value = 0;
+      this.master.connect(ac.destination);
+
+      // long, soft echo tail — gives the pad some space to sit in
+      this.delay = ac.createDelay(1.5);
+      this.delay.delayTime.value = 0.52;
+      const fb = ac.createGain(); fb.gain.value = 0.34;
+      const damp = ac.createBiquadFilter();
+      damp.type = "lowpass"; damp.frequency.value = 1600;
+      this.delay.connect(damp); damp.connect(fb); fb.connect(this.delay);
+      this.wet = ac.createGain(); this.wet.gain.value = 0.5;
+      this.delay.connect(this.wet); this.wet.connect(this.master);
+
+      // pad bus
+      this.filter = ac.createBiquadFilter();
+      this.filter.type = "lowpass";
+      this.filter.frequency.value = 520;
+      this.filter.Q.value = 2.2;
+      this.padGain = ac.createGain();
+      this.padGain.gain.value = 0.55;
+      this.filter.connect(this.padGain);
+      this.padGain.connect(this.master);
+      this.padGain.connect(this.delay);
+
+      // very slow filter drift
+      this.lfo = ac.createOscillator();
+      this.lfo.type = "sine";
+      this.lfo.frequency.value = 0.035;
+      const lg = ac.createGain(); lg.gain.value = 260;
+      this.lfo.connect(lg); lg.connect(this.filter.frequency);
+      this.lfo.start();
+
+      // four detuned voices
+      const chord = this.CHORDS[0];
+      for(let i = 0; i < 4; i++){
+        const o = ac.createOscillator();
+        o.type = i < 2 ? "sine" : "triangle";
+        o.frequency.value = chord[i];
+        o.detune.value = (i - 1.5) * 5;
+        const g = ac.createGain();
+        g.gain.value = i === 0 ? 0.34 : 0.2;
+        // gentle per-voice tremolo so the chord breathes
+        const trem = ac.createOscillator();
+        trem.type = "sine";
+        trem.frequency.value = 0.05 + i * 0.017;
+        const tg = ac.createGain(); tg.gain.value = 0.07;
+        trem.connect(tg); tg.connect(g.gain); trem.start();
+        o.connect(g); g.connect(this.filter);
+        o.start();
+        this.voices.push(o);
+      }
+
+      // filtered noise bed — distant air conditioning in an empty dome
+      const len = ac.sampleRate * 2;
+      const buf = ac.createBuffer(1, len, ac.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+      const src = ac.createBufferSource();
+      src.buffer = buf; src.loop = true;
+      const nf = ac.createBiquadFilter();
+      nf.type = "bandpass"; nf.frequency.value = 420; nf.Q.value = 0.7;
+      this.noiseGain = ac.createGain(); this.noiseGain.gain.value = 0.05;
+      src.connect(nf); nf.connect(this.noiseGain); this.noiseGain.connect(this.master);
+      src.start();
+    }catch(e){}
   },
-  start() {
-    this.init();
-    if(this.ctx && this.ctx.state === "suspended") this.ctx.resume();
-    if(this.gain) {
-      this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
-      this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
-      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.05, this.ctx.currentTime + 1);
-    }
-  },
-  stop() {
-    if(this.ctx && this.gain) {
-      this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
-      this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
-      this.gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 1);
-    }
-  },
-  toggle() {
-    this.muted = !this.muted;
-    if(this.ctx && this.gain) {
-      this.gain.gain.cancelScheduledValues(this.ctx.currentTime);
-      this.gain.gain.setValueAtTime(this.gain.gain.value, this.ctx.currentTime);
-      this.gain.gain.linearRampToValueAtTime(this.muted ? 0 : 0.05, this.ctx.currentTime + 0.3);
-    }
-  },
-  blip() {
-    if(this.muted || !this.ctx) return;
+
+  setChord(i){
+    if(!this.ctx) return;
+    const chord = this.CHORDS[i % this.CHORDS.length];
     const t = this.ctx.currentTime;
-    const b = this.ctx.createOscillator();
+    this.voices.forEach((o, n) => {
+      // setTargetAtTime = a slow glide between chords rather than a hard cut
+      o.frequency.setTargetAtTime(chord[n], t, 2.4);
+    });
+  },
+
+  start(){
+    this.init();
+    if(!this.ctx) return;
+    if(this.ctx.state === "suspended") this.ctx.resume();
+    const g = this.master.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(this.muted ? 0 : this.level, t + 3.5);
+    if(!this.timer){
+      this.setChord(this.step);
+      this.timer = setInterval(() => {
+        this.step++;
+        this.setChord(this.step);
+      }, 11000);
+    }
+    this.started = true;
+  },
+
+  stop(){
+    if(!this.ctx) return;
+    const g = this.master.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(0, t + 2);
+    if(this.timer){ clearInterval(this.timer); this.timer = null; }
+    this.started = false;
+  },
+
+  toggle(){
+    this.muted = !this.muted;
+    if(!this.ctx) return;
+    const g = this.master.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(this.muted ? 0 : (this.started ? this.level : 0), t + 0.8);
+  },
+
+  /** Occasional soft bell, pentatonic, straight into the echo. */
+  blip(){
+    if(this.muted || !this.ctx || !this.started) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
     const g = this.ctx.createGain();
-    b.type = "sine";
-    b.frequency.setValueAtTime(pick([196, 261.63, 329.63, 392, 523.25]), t);
-    g.gain.setValueAtTime(0.015, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
-    b.connect(g); g.connect(this.ctx.destination);
-    b.start(t); b.stop(t + 0.85);
+    o.type = "sine";
+    o.frequency.setValueAtTime(pick(this.SCALE), t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.05, t + 0.25);   // slow swell, no attack click
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+    o.connect(g);
+    g.connect(this.master);
+    g.connect(this.delay);
+    o.start(t); o.stop(t + 3.3);
   }
 };
 
@@ -691,20 +821,26 @@ const KEYMAP = {
   ArrowDown:"down",  KeyS:"down"
 };
 
+function wakeAudio(){
+  Sfx.init(); Sfx.resume();
+  Bgm.init(); if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+}
+
 window.addEventListener("keydown", e => {
   const k = KEYMAP[e.code];
   if(k){
     e.preventDefault();
     if(k === "jump" && !input.jump) input.jumpPressed = true;
     input[k] = true;
-    Sfx.init(); Sfx.resume();
-    Bgm.init(); if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+    wakeAudio();
   }
   if((e.code === "Enter" || e.code === "Space") && (game.state === "menu" || game.state === "over")){
     if(document.activeElement && document.activeElement.tagName === "INPUT") return;
+    if(infoScreen.classList.contains("on")) return;
     e.preventDefault();
     if(game.state === "menu") startGame(); else if(game.state === "over") showMenu();
   }
+  if(e.code === "Escape" && infoScreen.classList.contains("on")) closeInfo();
 }, { passive:false });
 
 window.addEventListener("keyup", e => {
@@ -713,6 +849,8 @@ window.addEventListener("keyup", e => {
 }, { passive:false });
 
 const touchLayer = document.getElementById("touch");
+/* was referenced but never declared before — that threw mid-startGame */
+const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
 function bindPad(id, key){
   const el = document.getElementById(id);
   const on = e => {
@@ -720,8 +858,7 @@ function bindPad(id, key){
     if(key === "jump" && !input.jump) input.jumpPressed = true;
     input[key] = true;
     el.classList.add("down");
-    Sfx.init(); Sfx.resume();
-    Bgm.init(); if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+    wakeAudio();
   };
   const off = e => { e.preventDefault(); input[key] = false; el.classList.remove("down"); };
   el.addEventListener("touchstart", on,  { passive:false });
@@ -748,9 +885,9 @@ const APEX_GRAV    = 0.70;
 const MAX_FALL     = 6.2;
 const JUMP_V       = -5.2;
 const CUT_JUMP     = -2.0;
-const ACCEL        = 0.28;   // Reduced from 0.46
-const FRICTION     = 0.85;   // Increased coasting slightly since accel is lower
-const MAX_SPEED    = 1.55;   // Reduced from 2.05
+const ACCEL        = 0.28;
+const FRICTION     = 0.85;
+const MAX_SPEED    = 1.55;
 const POISON_MULT  = 0.52;
 const DUCK_MULT    = 0.55;
 const COYOTE       = 6;
@@ -796,6 +933,25 @@ function addPickup(x, y, kind){
   pickups.push({ x, y, w:kind === "beer" ? 7 : 9, h:kind === "beer" ? 12 : 9, kind, bob:Math.random() * 6.28 });
 }
 
+/* Rings and beers are the two things that bail you out, so they are rationed:
+   a hard minimum spacing along the run, then a roll on top of that. */
+let lastRingX = -99999, lastBeerX = -99999;
+const RING_GAP = 3200, BEER_GAP = 850;
+
+function tryRing(x, y, fallback){
+  if(x - lastRingX > RING_GAP && Math.random() < .3){
+    lastRingX = x; addPickup(x, y, "ring"); return true;
+  }
+  if(fallback) addPickup(x, y, fallback);
+  return false;
+}
+
+function tryBeer(x, y, chance){
+  if(x - lastBeerX < BEER_GAP) return false;
+  if(Math.random() > chance) return false;
+  lastBeerX = x; addPickup(x, y, "beer"); return true;
+}
+
 function addEnemy(kind, x, y, opts){
   const e = Object.assign({
     kind, x, y, w:12, h:10, vx:0, vy:0, dir:Math.random() < .5 ? -1 : 1,
@@ -803,18 +959,38 @@ function addEnemy(kind, x, y, opts){
   }, opts || {});
   if(kind === "redback"){ e.w = 11; e.h = 8; e.speed = 0.32 + game.difficulty * .05; }
   if(kind === "huntsman"){ e.w = 13; e.h = 9; e.state = "hang"; e.speed = 0.42 + game.difficulty * .05; }
-  if(kind === "teen"){ e.w = 10; e.h = 20; e.y = y - 10; e.speed = 0.75 + game.difficulty * .08; }
+  if(kind === "koala"){ e.w = 13; e.h = 14; e.y = y - 14; e.speed = 0.42 + game.difficulty * .05; }
   if(kind === "roo"){ e.w = 16; e.h = 22; e.y = y - 12; e.speed = 1.15 + game.difficulty * .1; }
   enemies.push(e);
 }
 
-const SIGN_TEXT = ["BARRY & ROBERTS","SPACE CITY","MILK BAR","CHEMIST","LAY-BY","DISCS","TAB","SNACK BAR"];
+/* The neon still burning above the domes is street signage — every one of
+   these is a real Kallangur road. */
+const STREETS = [
+  "ANZAC AVE","DUFFIELD RD","BRICKWORKS RD","SCHOOL RD","GOODFELLOWS RD",
+  "MARSDEN RD","OLD GYMPIE RD","DOHLES ROCKS RD","NARANGBA RD","SHEAVES RD",
+  "CURTIS RD","KEDRON RD","SPRING RD","WINTER RD","STOREY RD",
+  "THOMPSON RD","WHITEHORSE RD","McNEILL RD","BICKLE RD","COTTERELL RD",
+  "KAHALA RD","KAPALAMA RD","HANLON RD","LEIS RD","BALSTRUP RD",
+  "GARNET AVE","DIAMOND AVE","PEARL AVE","GOLDEN AVE","BROLGA AVE",
+  "MASON AVE","KOOKABURRA ST","LADYBIRD ST","JEWELL ST","CECILY ST",
+  "FACTORY ST","WATTLE ST","GEMINI ST","AQUARIUS ST","ULYSSES ST",
+  "DIANE PDE","BURNS PDE","BUTTERFLY DR","IRONBARK DR","PARKSIDE DR"
+];
 
 function addProps(x, w){
-  if(Math.random() < .55) props.push({ type:"pillar", x:x + rnd(20, w - 40), y:GROUND_Y - rnd(34, 74), w:rndi(6,10), h:80 });
-  if(Math.random() < .4) props.push({ type:"sign", x:x + rnd(30, w - 60), y:rnd(70, 140), text:pick(SIGN_TEXT), col:Math.random() < .5 ? "#4ff2d8" : "#ff4f9e", flick:Math.random() * 100 });
+  // gum trees in the mid-ground, in front of the domes
+  if(Math.random() < .72){
+    props.push({ type:"gum", x:x + rnd(16, w - 30), y:GROUND_Y,
+                 h:rndi(54, 104), lean:rnd(-0.16, 0.16), seed:Math.random() });
+  }
+  if(Math.random() < .3){   // a scrubby second one, further along
+    props.push({ type:"gum", x:x + rnd(16, w - 20), y:GROUND_Y,
+                 h:rndi(38, 62), lean:rnd(-0.22, 0.22), seed:Math.random() });
+  }
+  if(Math.random() < .4) props.push({ type:"sign", x:x + rnd(30, w - 60), y:rnd(70, 140), text:pick(STREETS), col:Math.random() < .5 ? "#4ff2d8" : "#ff4f9e", flick:Math.random() * 100 });
   if(Math.random() < .7) props.push({ type:"rubble", x:x + rnd(10, w - 20), y:GROUND_Y - 4, w:rndi(6,16), h:4 });
-  
+
   // Local Landmarks
   if(Math.random() < .25) {
      props.push({ type: "landmark", kind: pick(["pineapple", "ettamogah", "watertower", "hillshoist", "gumtree", "expo88"]), x: x + rnd(20, w - 40), y: GROUND_Y });
@@ -838,10 +1014,10 @@ function chunkCrates(x){
     const sx = cx + s * 46;
     for(let i = 0; i < tall; i++) addSolid(sx, y - 13 * (i + 1), 14, 13, "crate");
     const topY = y - 13 * tall;
-    if(s === stacks - 1 && Math.random() < .6) addPickup(sx + 3, topY - 14, "beer");
-    else addPickup(sx + 3, topY - 12, Math.random() < .4 ? "lamp" : "cassette");
+    if(!(s === stacks - 1 && tryBeer(sx + 3, topY - 14, .28)))
+      addPickup(sx + 3, topY - 12, Math.random() < .4 ? "lamp" : "cassette");
   }
-  if(Math.random() < .5) addEnemy("teen", x + rnd(160, 230), y, {});
+  if(Math.random() < .5) addEnemy("koala", x + rnd(160, 230), y, {});
   addProps(x, w); return x + w;
 }
 
@@ -850,7 +1026,7 @@ function chunkPit(x){
   const gap = 46 + Math.random() * 16 + game.difficulty * 3;
   const slabW = 34; const slabX = x + 100 + gap / 2 - slabW / 2;
   addSolid(slabX, GROUND_Y - 42, slabW, 8, "slab"); // Tim Tam platform
-  addPickup(slabX + slabW / 2 - 4, GROUND_Y - 70, Math.random() < .5 ? "ring" : "lamp");
+  tryRing(slabX + slabW / 2 - 4, GROUND_Y - 70, "lamp");
   const after = x + 100 + gap; addGround(after, 130);
   addProps(x, 100); return after + 130;
 }
@@ -858,7 +1034,7 @@ function chunkPit(x){
 function chunkCrawl(x){
   const w = 240; addGround(x, w); const y = GROUND_Y;
   const ox = x + 80, ow = 78;
-  addSolid(ox, y - 26, ow, 10, "slab");      
+  addSolid(ox, y - 26, ow, 10, "slab");
   const hx = ox + ow + 34;
   addEnemy("huntsman", hx - 6, y - 74, { anchorY:y - 74, dropX:hx });
   addPickup(ox + 20, y - 12, "cassette");
@@ -873,7 +1049,7 @@ function chunkRoos(x){
   for(let i = 0; i < n; i++) addEnemy("roo", x + 110 + i * 80, y, {});
   addPickup(x + 60, y - 30, "cassette");
   addPickup(x + 200, y - 30, "lamp");
-  if(Math.random() < .4) addPickup(x + 140, y - 12, "beer");
+  tryBeer(x + 140, y - 12, .2);
   addProps(x, w); return x + w;
 }
 
@@ -881,26 +1057,26 @@ function chunkAlcove(x){
   const w = 240; addGround(x, w); const y = GROUND_Y;
   addSolid(x + 60, y - 44, 60, 9, "slab");
   addSolid(x + 150, y - 74, 52, 9, "slab");
-  addPickup(x + 82, y - 58, "beer");
-  addPickup(x + 170, y - 88, Math.random() < .35 ? "ring" : "lamp");
+  if(!tryBeer(x + 82, y - 58, .3)) addPickup(x + 82, y - 58, "cassette");
+  tryRing(x + 170, y - 88, "lamp");
   addPickup(x + 20, y - 14, "cassette");
   if(Math.random() < .6) addEnemy("redback", x + rnd(200, 230), y - 8, { patrol:40 });
   addProps(x, w); return x + w;
 }
 
-function chunkTeens(x){
+function chunkKoalas(x){
   const w = 250; addGround(x, w); const y = GROUND_Y;
   addSolid(x + 100, y - 13, 14, 13, "crate");
   addSolid(x + 114, y - 13, 14, 13, "crate");
   addSolid(x + 114, y - 26, 14, 13, "crate");
-  addEnemy("teen", x + 70,  y, {});
-  addEnemy("teen", x + 180, y, {});
+  addEnemy("koala", x + 70,  y, {});
+  addEnemy("koala", x + 180, y, {});
   addPickup(x + 121, y - 40, "lamp");
   addPickup(x + 210, y - 32, "cassette");
   addProps(x, w); return x + w;
 }
 
-const CHUNKS = [chunkFlat, chunkCrates, chunkPit, chunkCrawl, chunkRoos, chunkAlcove, chunkTeens];
+const CHUNKS = [chunkFlat, chunkCrates, chunkPit, chunkCrawl, chunkRoos, chunkAlcove, chunkKoalas];
 
 function streamWorld(){
   while(game.spawnX < camera.x + VW + 420){
@@ -930,13 +1106,13 @@ function moveX(body, dx){
   let blocker = null;
   for(const s of nearbySolids(body)){
     if(!hit(body, s)) continue;
-    
+
     // Crates can be pushed horizontally if bumped by player
     if(s.kind === "crate" && body === player) {
-      s.x += dx * 0.7;               
+      s.x += dx * 0.7;
       if(dx > 0) body.x = s.x - body.w;
       else if(dx < 0) body.x = s.x + s.w;
-      body.vx *= 0.6;                
+      body.vx *= 0.6;
     } else {
       if(dx > 0) body.x = s.x - body.w;
       else if(dx < 0) body.x = s.x + s.w;
@@ -998,7 +1174,7 @@ function updatePlayer(){
   let top = MAX_SPEED;
   if(player.poison > 0) top *= POISON_MULT;
   if(player.ducking)    top *= DUCK_MULT;
-  
+
   if(player.ringPower > 0) {
       top = 2.7; // Fast speed from Mood Ring!
       player.ringPower--;
@@ -1112,13 +1288,16 @@ function updateEnemies(){
         enemyPhysics(e);
       }
 
-    } else if(e.kind === "teen"){
+    } else if(e.kind === "koala"){
+      // Drop bear: shuffles about, occasionally launches itself at you.
       e.timer--;
+      const dist = (player.x + player.w / 2) - (e.x + e.w / 2);
       if(e.timer <= 0){
-        e.timer = rndi(24, 80);
+        e.timer = rndi(40, 110);
+        const aggro = Math.abs(dist) < 68;   // short fuse — you can outrun one
         const roll = Math.random();
-        e.dir = roll < .38 ? -1 : roll < .76 ? 1 : 0;
-        if(Math.random() < .3 && e.onGround) e.vy = -4.1;
+        e.dir = aggro ? (Math.sign(dist) || 1) : (roll < .35 ? -1 : roll < .7 ? 1 : 0);
+        if(aggro && e.onGround && Math.random() < .35) e.vy = -4.1;
       }
       e.vx = e.dir * e.speed;
       const wall = moveX(e, e.vx);
@@ -1147,8 +1326,8 @@ function updateEnemies(){
 
     // --- contact with the player -----------------------------------------
     if(hit(player, e) && player.invuln === 0 && player.ringPower <= 0){
-      
-      // STOMP MECHANIC: Kangaroos & Spiders
+
+      // STOMP MECHANIC: Kangaroos & Spiders (never koalas — they bite back)
       if(player.vy > 0 && player.y + player.h - player.vy <= e.y + 16){
          if(e.kind === "roo") {
             player.vy = -4.5;
@@ -1165,11 +1344,12 @@ function updateEnemies(){
             continue;
          }
       }
-      
+
       // Damage calculations based on enemy type
       if(e.kind === "redback" || e.kind === "huntsman"){
         damage(e.kind === "huntsman" ? 8 : 5, 220);
-      } else if(e.kind === "teen"){
+      } else if(e.kind === "koala"){
+        addPopup(e.x, e.y - 6, "DROP BEAR", "#ff5b2e");
         damage(100, 0); // Automatic Kill!
       } else {
         damage(35, 0);  // Heavy damage from Roos
@@ -1221,7 +1401,7 @@ function updateBirds(){
      let b = birds[i];
      b.x -= b.speed;
      b.anim += 0.15;
-     
+
      // Magpie swoop!
      if(b.type === "magpie" && Math.abs(player.x - b.x) < 80) b.y += 1.8;
      if(b.x < camera.x - 30) birds.splice(i, 1);
@@ -1296,7 +1476,6 @@ function drawDomes(offset, baseY, radius, spacing, col){
 function drawBirds(){
   for(const b of birds) {
      const bx = b.x - camera.x;
-     ctx.fillStyle = "#110a17";
      const wingY = Math.sin(b.anim) * 3;
      if (b.type === "binchicken") {
         px(bx, b.y, 6, 2, "#110a17");
@@ -1307,6 +1486,35 @@ function drawBirds(){
         px(bx+1, b.y + wingY, 2, 2, "#110a17");
      }
   }
+}
+
+/** A leaning gum in silhouette: ragged trunk, two limbs, three canopy blobs. */
+function drawGum(sx, p){
+  const col = "rgba(28,20,36,0.92)";
+  ctx.fillStyle = col;
+  ctx.strokeStyle = col;
+
+  // trunk, tapering and leaning as it climbs
+  for(let i = 0; i < p.h; i += 4){
+    const t = i / p.h;
+    px(sx + p.lean * i, p.y - i - 5, Math.max(2, 5 - t * 2.6), 6, col);
+  }
+  const tx = sx + p.lean * p.h;
+  const topY = p.y - p.h;
+
+  // limbs
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(tx + 1, topY + 16); ctx.lineTo(tx - 13, topY + 3);
+  ctx.moveTo(tx + 2, topY + 22); ctx.lineTo(tx + 15, topY + 5);
+  ctx.stroke();
+
+  // canopy — a few overlapping clumps, sized off the tree's own seed
+  const r = 9 + p.seed * 6;
+  ctx.beginPath(); ctx.ellipse(tx + 2,      topY - 2,       r + 6, r,     0, 0, 6.2832); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(tx - 14,     topY + 2,       r,     r - 3, 0, 0, 6.2832); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(tx + 16,     topY + 4,       r + 1, r - 2, 0, 0, 6.2832); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(tx - 4,      topY + 10,      r - 2, r - 4, 0, 0, 6.2832); ctx.fill();
 }
 
 function drawParallax(){
@@ -1332,23 +1540,24 @@ function drawParallax(){
       const sx = p.x - camera.x * 0.4; // Mid-speed parallax
       if(sx < -100 || sx > VW + 100) continue;
       ctx.fillStyle = "rgba(35,22,40,0.8)";
-      
+
       if(p.kind === "pineapple"){
          ctx.beginPath(); ctx.ellipse(sx, p.y - 25, 15, 25, 0, 0, Math.PI*2); ctx.fill();
          px(sx - 8, p.y - 60, 3, 12, "rgba(35,22,40,0.8)");
          px(sx, p.y - 65, 3, 15, "rgba(35,22,40,0.8)");
          px(sx + 6, p.y - 58, 3, 12, "rgba(35,22,40,0.8)");
       } else if(p.kind === "ettamogah") {
-         px(sx - 25, p.y - 35, 50, 35, "rgba(35,22,40,0.8)"); 
-         px(sx - 35, p.y - 40, 70, 8, "rgba(35,22,40,0.8)"); 
-         px(sx - 5, p.y - 50, 16, 10, "rgba(35,22,40,0.8)"); 
+         px(sx - 25, p.y - 35, 50, 35, "rgba(35,22,40,0.8)");
+         px(sx - 35, p.y - 40, 70, 8, "rgba(35,22,40,0.8)");
+         px(sx - 5, p.y - 50, 16, 10, "rgba(35,22,40,0.8)");
       } else if(p.kind === "watertower") {
          px(sx - 6, p.y - 60, 2, 60, "rgba(35,22,40,0.8)");
          px(sx + 4, p.y - 60, 2, 60, "rgba(35,22,40,0.8)");
          px(sx - 12, p.y - 75, 24, 20, "rgba(35,22,40,0.8)");
       } else if(p.kind === "hillshoist") {
-         px(sx, p.y - 25, 2, 25, "rgba(35,22,40,0.8)"); 
-         px(sx - 15, p.y - 25, 30, 2, "rgba(35,22,40,0.8)"); 
+         px(sx, p.y - 25, 2, 25, "rgba(35,22,40,0.8)");
+         px(sx - 15, p.y - 25, 30, 2, "rgba(35,22,40,0.8)");
+         ctx.strokeStyle = "rgba(35,22,40,0.8)"; ctx.lineWidth = 1;
          ctx.beginPath(); ctx.moveTo(sx-15, p.y-25); ctx.lineTo(sx-5, p.y-15); ctx.lineTo(sx+5, p.y-15); ctx.lineTo(sx+15, p.y-25); ctx.stroke();
       } else if(p.kind === "gumtree") {
          px(sx, p.y - 45, 4, 45, "rgba(35,22,40,0.8)");
@@ -1358,16 +1567,18 @@ function drawParallax(){
       } else if(p.kind === "expo88") {
          px(sx, p.y - 50, 2, 50, "rgba(35,22,40,0.8)");
          ctx.beginPath(); ctx.arc(sx + 1, p.y - 62, 12, 0, Math.PI*2); ctx.fill();
-         ctx.fillStyle = "#e0714f"; 
+         ctx.fillStyle = "#e0714f";
          ctx.fillText("88", sx + 1, p.y - 60);
       }
     }
   }
 
+  // gum trees sit closest to the play field, in front of the domes
   for(const p of props){
+    if(p.type !== "gum") continue;
     const sx = p.x - camera.x * 0.62;
-    if(sx < -40 || sx > VW + 40) continue;
-    if(p.type === "pillar") px(sx, p.y, p.w, p.h, "rgba(30,22,38,0.88)");
+    if(sx < -60 || sx > VW + 60) continue;
+    drawGum(sx, p);
   }
 }
 
@@ -1492,14 +1703,25 @@ function drawEnemies(){
         px(sx + i * 3, e.y - 1 + legPhase, 2, 2, "#54412f");
       }
 
-    } else if(e.kind === "teen"){
-      const bounce = Math.sin(e.anim * 1.4) > 0 ? 0 : 1;
-      px(sx + 2, e.y + 1, 6, 5, "#2a2a30");
-      px(sx + 3, e.y + 4, 5, 4, "#c9976b");
-      px(sx + 1, e.y + 8, 8, 8, "#7a3f8c");
-      px(sx + 4, e.y + 8, 2, 8, "#4a2456");
-      px(sx + 1, e.y + 16, 3, 4 - bounce, "#2f3b6b");
-      px(sx + 6, e.y + 16, 3, 4 - (1 - bounce), "#2f3b6b");
+    } else if(e.kind === "koala"){
+      // Drop bear. Fluffy ears, black button nose, absolutely lethal.
+      const bob = Math.sin(e.anim * 1.2) > 0 ? 0 : 1;
+      const fur = "#9d958a", furDark = "#6f675c", furLight = "#b8b0a4";
+      px(sx,      e.y + 1, 4, 5, fur);            // left ear
+      px(sx + 9,  e.y + 1, 4, 5, fur);            // right ear
+      px(sx + 1,  e.y + 2, 2, 3, furDark);
+      px(sx + 10, e.y + 2, 2, 3, furDark);
+      px(sx + 2,  e.y,     9, 8, furLight);       // head
+      px(sx + 4,  e.y + 3, 1, 2, "#150d20");      // eyes
+      px(sx + 8,  e.y + 3, 1, 2, "#150d20");
+      px(sx + 5,  e.y + 5, 3, 3, "#241b28");      // nose
+      px(sx + 3,  e.y + 8, 7, 5 - bob, fur);      // body
+      px(sx,      e.y + 8, 3, 4, furDark);        // arms
+      px(sx + 10, e.y + 8, 3, 4, furDark);
+      px(sx + 3,  e.y + 12 - bob, 3, 2 + bob, furDark);  // feet
+      px(sx + 7,  e.y + 12 - bob, 3, 2 + bob, furDark);
+      px(sx + 4,  e.y + 9, 1, 1, "#3b352e");      // claws
+      px(sx + 11, e.y + 9, 1, 1, "#3b352e");
 
     } else if(e.kind === "roo"){
       const f = e.onGround ? 0 : 3;
@@ -1555,7 +1777,7 @@ function drawPlayer(){
     const t = player.thrust;
     px(sx + 3, sy + (duck ? 12 : 20), 4, 2 + t / 4, t > 6 ? "#4ff2d8" : "#ff5b2e");
   }
-  
+
   ctx.globalAlpha = 1.0;
 }
 
@@ -1606,15 +1828,16 @@ function tick(now){
       updateEnemies();
       updatePickups();
       updateBirds();
-      
+
       const target = player.x - VW * 0.32;
       camera.x = Math.max(camera.x, target);
       streamWorld();
       if(game.time % 30 === 0) cullWorld();
-      
-      if(Math.random() < 0.01) Bgm.blip();
+
+      // sparse bells — roughly one every six or seven seconds
+      if(Math.random() < 0.0028) Bgm.blip();
     }
-    
+
     if(game.state === "play" || game.state === "info" || game.state === "over"){
       updateParticles();
       if(game.shake > 0) game.shake--;
@@ -1666,6 +1889,7 @@ function resetWorld(){
   solids = []; pickups = []; enemies = []; props = []; popups = []; dust = []; birds = [];
   game.score = 0; game.items = 0; game.distance = 0; game.difficulty = 1;
   game.spawnX = 0; game.shake = 0;
+  lastRingX = -99999; lastBeerX = -99999;
   camera.x = 0;
   Object.assign(player, {
     x:60, y:GROUND_Y - STAND_H, w:PLAYER_W, h:STAND_H,
@@ -1683,7 +1907,8 @@ function showMenu(){
   infoScreen.classList.remove("on");
   startScreen.classList.add("on");
   touchLayer.classList.remove("on");
-  el("infoBtn").style.display = "none";
+  el("infoBtn").style.display = "inline-block";
+  el("infoBtn").textContent = "Info";
   el("endBtn").style.display = "none";
   resetWorld();
   loadLeaderboard();
@@ -1699,7 +1924,7 @@ function startGame(){
   overScreen.classList.remove("on");
   infoScreen.classList.remove("on");
   if(isTouch) touchLayer.classList.add("on");
-  
+
   el("infoBtn").style.display = "inline-block";
   el("infoBtn").textContent = "Info";
   el("endBtn").style.display = "inline-block";
@@ -1711,6 +1936,7 @@ function startGame(){
   el("entryForm").style.display = LEADERBOARD_READY ? "flex" : "none";
 }
 
+/** End the run on purpose — bank the score, post it, then go again. */
 function endRun(){
   if(game.state !== "play" && game.state !== "info") return;
   game.state = "over";
@@ -1718,11 +1944,11 @@ function endRun(){
   Bgm.stop();
   touchLayer.classList.remove("on");
   input.left = input.right = input.jump = input.down = false;
-  el("infoScreen").classList.remove("on");
-  
+  infoScreen.classList.remove("on");
+
   el("infoBtn").style.display = "none";
   el("endBtn").style.display = "none";
-  
+
   el("oScore").textContent = game.score;
   el("oDist").textContent  = game.distance + "m";
   el("oItems").textContent = game.items;
@@ -1731,11 +1957,35 @@ function endRun(){
     status.textContent = "Leaderboard not connected — add your Apps Script URL";
     status.className = "status warn";
   }
-  
+
   // Re-enable submit button for a fresh submission
   el("submitBtn").disabled = false;
-  
+
   overScreen.classList.add("on");
+}
+
+/* --- info overlay: works from the menu and mid-run (mid-run it pauses) ---- */
+let infoReturn = "menu";
+
+function openInfo(){
+  if(infoScreen.classList.contains("on")) return;
+  infoReturn = game.state;
+  if(game.state === "play") game.state = "info";
+  infoScreen.classList.add("on");
+  infoScreen.scrollTop = 0;
+  el("infoBtn").textContent = infoReturn === "play" ? "Resume" : "Close";
+}
+
+function closeInfo(){
+  if(!infoScreen.classList.contains("on")) return;
+  infoScreen.classList.remove("on");
+  el("infoBtn").textContent = "Info";
+  if(infoReturn === "play" && game.state === "info"){
+    game.state = "play";
+    Sfx.resume();
+    if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
+    Bgm.start();
+  }
 }
 
 el("playBtn").addEventListener("click", startGame);
@@ -1744,27 +1994,9 @@ el("endBtn").addEventListener("click", () => {
   if(game.state === "play" || game.state === "info") endRun();
 });
 el("infoBtn").addEventListener("click", () => {
-  if(game.state === "play"){
-    game.state = "info";
-    infoScreen.classList.add("on");
-    el("infoBtn").textContent = "Resume";
-  } else if(game.state === "info"){
-    game.state = "play";
-    infoScreen.classList.remove("on");
-    el("infoBtn").textContent = "Info";
-    Sfx.resume();
-    if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
-  }
+  if(infoScreen.classList.contains("on")) closeInfo(); else openInfo();
 });
-el("resumeBtn").addEventListener("click", () => {
-  if(game.state === "info"){
-    game.state = "play";
-    infoScreen.classList.remove("on");
-    el("infoBtn").textContent = "Info";
-    Sfx.resume();
-    if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
-  }
-});
+el("resumeBtn").addEventListener("click", closeInfo);
 
 el("muteBtn").addEventListener("click", () => {
   Sfx.muted = !Sfx.muted;
@@ -1772,6 +2004,8 @@ el("muteBtn").addEventListener("click", () => {
 });
 
 el("musicBtn").addEventListener("click", () => {
+  Bgm.init();
+  if(Bgm.ctx && Bgm.ctx.state === "suspended") Bgm.ctx.resume();
   Bgm.toggle();
   el("musicBtn").textContent = "Mus: " + (Bgm.muted ? "off" : "on");
 });
@@ -1847,7 +2081,7 @@ el("submitBtn").addEventListener("click", async () => {
   status.textContent = "Posting…";
   status.className = "status";
   el("submitBtn").disabled = true;
-  
+
   try{
     await fetch(LEADERBOARD_URL, {
       method:"POST",
@@ -1860,12 +2094,12 @@ el("submitBtn").addEventListener("click", async () => {
         ts:new Date().toISOString()
       })
     });
-    
+
     // Display success briefly, then return to start menu
     status.textContent = "Posted — " + name;
     status.className = "status ok";
     loadLeaderboard();
-    
+
     setTimeout(() => {
        showMenu();
     }, 1200);
